@@ -1,5 +1,7 @@
 //MEMORIA.V
 
+
+//PROGRAM MEMORY
 module rom_128x8_sync ( // essa é a program memory, é a memória que armazena as intruções e as informações pertinentes para a realização das instruções(opcode e operand). È uma ROM que podem ser armazenadas 128 palavras de 8 bits de tamnho cada(128x8)
     input wire [7:0] address,  // Endereço da ROM
     input wire clock,          // Clock
@@ -25,6 +27,7 @@ module rom_128x8_sync ( // essa é a program memory, é a memória que armazena 
 endmodule
 
 	
+//DATA MEMORY
 module rw_96x8_sync ( // essa é a data memory, é uma memória normal. Aparentemente, serve mais para ajudar a fazer contas maiores e coisinhas desse tipo de suporte ao CPU 
     input wire [7:0] address,  // Endereço da RAM
     input wire clock,          // Clock
@@ -52,6 +55,7 @@ module rw_96x8_sync ( // essa é a data memory, é uma memória normal. Aparente
 endmodule
 
 
+//MEMORY de fato
 module memory (
     input wire [7:0] address,           // Endereço de memória (8 bits)
     input wire [7:0] data_in,           // Dados de entrada para escrita
@@ -158,6 +162,43 @@ module memory (
 
 //CPU.V
     
+
+//ALU    
+module alu( // n alterei nada na ula enviada pelo gpt
+    input wire [7:0] A,         // Operando A
+    input wire [7:0] B,         // Operando B
+    input wire [2:0] ALU_Sel,   // Selector da operação
+    output reg [7:0] ALU_Out,   // Resultado da ALU
+    output reg Zero,            // Flag Zero
+    output reg Negative,        // Flag Negativo
+    output reg Carry,           // Flag Carry
+    output reg Overflow         // Flag Overflow
+);
+    always @(*) begin
+        // Operações baseadas no seletor
+        case (ALU_Sel)
+            3'b000: ALU_Out = A + B;          // Soma
+            3'b001: ALU_Out = A - B;          // Subtração
+            3'b010: ALU_Out = A & B;          // AND
+            3'b011: ALU_Out = A | B;          // OR
+            3'b100: ALU_Out = A ^ B;          // XOR
+            3'b101: ALU_Out = ~A;             // NOT (Somente A)
+            3'b110: ALU_Out = A << 1;         // Shift lógico para a esquerda
+            3'b111: ALU_Out = A >> 1;         // Shift lógico para a direita
+            default: ALU_Out = 8'b00000000;   // Valor padrão
+        endcase
+
+        // Atualização das flags
+        Zero     = (ALU_Out == 8'b0);         // Flag Zero
+        Negative = ALU_Out[7];                // Flag Negativo (MSB = 1)
+        Carry    = (A + B > 8'b11111111);     // Carry gerado na soma
+        Overflow = ((A[7] & B[7] & ~ALU_Out[7]) | (~A[7] & ~B[7] & ALU_Out[7])); // Overflow
+    end
+endmodule
+   
+      
+    
+//DATA_PATH    
 module data_path (
     input wire clock,
     input wire reset,
@@ -266,29 +307,29 @@ module data_path (
 	end
   
   
-  // Endereço e saída de dados(???)
+  // Endereço e saída de dados(??? ideia do gpt n sei se mantenho)
     assign address = MAR;
     assign to_memory = A; // Dado a ser enviado para a memória (exemplo)
 
     
 
-    // Operação da ALU
-    always @(*) begin
-        case (ALU_Sel)
-            3'b000: ALU_Result = A + B;   // Soma
-            3'b001: ALU_Result = A - B;   // Subtração
-            3'b010: ALU_Result = A & B;   // AND
-            3'b011: ALU_Result = A | B;   // OR
-            3'b100: ALU_Result = A ^ B;   // XOR
-            3'b101: ALU_Result = ~A;      // NOT
-            default: ALU_Result = 8'h00;  // Operação padrão
-        endcase
-    end
+// Instância do módulo ALU
+    alu alu_instance (
+        .A(A),
+        .B(B),
+        .ALU_Sel(ALU_Sel),
+        .ALU_Out(ALU_Out),
+        .Zero(Zero),
+        .Negative(Negative),
+        .Carry(Carry),
+        .Overflow(Overflow)
+    );
 
 
 endmodule
 
-    
+
+//UNIDADE DE CONTROLE    
 module control_unit (
     input wire clock,
     input wire reset,
@@ -369,7 +410,7 @@ module control_unit (
 endmodule
 
     
-    
+//CPU de fato    
 module cpu (
     input wire clock,          // Sinal de clock
     input wire reset,          // Sinal de reset
