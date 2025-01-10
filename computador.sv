@@ -1,6 +1,6 @@
 //MEMORIA.V
 
-
+//banana amassada
 //PROGRAM MEMORY
 module rom_128x8_sync ( // essa é a program memory, é a memória que armazena as intruções e as informações pertinentes para a realização das instruções(opcode e operand). È uma ROM que podem ser armazenadas 128 palavras de 8 bits de tamnho cada(128x8)
     input wire [7:0] address,  // Endereço da ROM
