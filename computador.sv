@@ -1,7 +1,7 @@
 //MEMORIA.V
 
-//banana amassada
-//PROGRAM MEMORY
+
+//PROGRAM MEMORY 
 module rom_128x8_sync ( // essa é a program memory, é a memória que armazena as intruções e as informações pertinentes para a realização das instruções(opcode e operand). È uma ROM que podem ser armazenadas 128 palavras de 8 bits de tamnho cada(128x8)
     input wire [7:0] address,  // Endereço da ROM
     input wire clock,          // Clock
@@ -39,7 +39,36 @@ module rw_96x8_sync ( // essa é a data memory, é uma memória normal. Aparente
 
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
 		begin
-          if ( (address >= 128) && (address <= 223) )
+          if ( (address >= 128) && (address <= 175) )
+				EN = 1’b1;
+			else
+				EN = 1’b0;
+		end
+    
+  always @ (posedge clock) // verifica se o endereço é coerente antes de escrever ou enviar os dados
+		begin
+			if (write && EN)
+              RW[address] = data_in;
+			else if (!write && EN)
+				data_out = RW[address];
+		end
+endmodule
+
+
+//PILHA
+module pilha ( // essa é a data memory, é uma memória normal. Aparentemente, serve mais para ajudar a fazer contas maiores e coisinhas desse tipo de suporte ao CPU 
+    input wire [7:0] address,  // Endereço da RAM
+    input wire clock,          // Clock
+    input wire write,          // Sinal de escrita
+    input wire [7:0] data_in,  // Dados de entrada para escrita
+    output reg [7:0] data_out  // Dados de saída para leitura
+);
+  reg[7:0] pilha[176:222];  // Memória RAM de 96 endereços, 8 bits cada(é uma continuação do passado, por isso começa do 176)
+  reg[7:0] topo[223:223];; //n sei se é melhor colocar o registrador do topo como parte do vetor da pilha o algo separado.Coloquei como fazendo parte pq eu acho q o pc vai ter que armezenar apontar pro registrador que guarda o topo e do topo ir para o local da pilha
+
+  always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
+		begin
+          if ( (address >= 176) && (address <= 223) )
 				EN = 1’b1;
 			else
 				EN = 1’b0;
@@ -70,7 +99,7 @@ module memory (
     wire [7:0] rom_data_out;  // Saída da ROM
     wire [7:0] ram_data_out;  // Saída da RAM
 
-    // Instanciação da ROM
+    // Instanciação da PROGRAM MEMORY
     rom_128x8_sync rom_inst (
         .address(address),
         .clock(clock),
@@ -79,6 +108,15 @@ module memory (
 
     // Instanciação da RAM
     rw_96x8_sync ram_inst (
+        .address(address),
+        .clock(clock),
+        .write(write),
+        .data_in(data_in),
+        .data_out(ram_data_out)
+    );
+  
+    // Instanciação da PILHA
+    pilha (
         .address(address),
         .clock(clock),
         .write(write),
@@ -107,7 +145,133 @@ module memory (
                   if ((address == 8’hE1) && (write))
 					port_out_01 <= data_in;
 		end
-		//tem mais que essas duas só, vai até E15
+    //-- port_out_01 (address E2)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE2) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E3)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE3) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E4)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE4) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E5)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE5) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E6)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE6) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E7)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE7) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E8)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE8) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address E9)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hE9) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address EA-10)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hEA) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address EB-11)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hEB) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address EC-12)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hEC) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address ED-13)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hED) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address EE-14)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hEE) && (write))
+					port_out_01 <= data_in;
+		end
+    //-- port_out_01 (address EF-15)
+		always @ (posedge clock or negedge reset)
+			begin
+				if (!reset)
+					port_out_01 <= 8’h00;
+				else
+                  if ((address == 8’hEF) && (write))
+					port_out_01 <= data_in;
+		end
+		
     
     
     //Multiplexador, verifica o endereço para saber qual parte da memória vai ter informações enviadas para o CPU
@@ -347,65 +511,139 @@ module control_unit (
     output reg Bus2_Sel
 );
 
-    // Estados da FSM
-    typedef enum reg [2:0] {
-        FETCH, DECODE, EXECUTE, WRITEBACK
-    } state_t;
-    state_t current_state, next_state;
+  	//FSM
+  	//DEFINICAO DOS PARAMETROS
+    reg [7:0] current_state, next_state;
+	parameter S_FETCH_0 = 0, //-- Opcode fetch states
+          S_FETCH_1 = 1,
+          S_FETCH_2 = 2,
+          S_DECODE_3 = 3, //-- Opcode decode state
+          S_LDA_IMM_4 = 4, //-- Load A (Immediate) states
+          S_LDA_IMM_5 = 5,
+          S_LDA_IMM_6 = 6,
+          S_LDA_DIR_4 = 7, //-- Load A (Direct) states
+          S_LDA_DIR_5 = 8,
+          S_LDA_DIR_6 = 9,
+          S_LDA_DIR_7 = 10,
+          S_LDA_DIR_8 = 11,
+          S_STA_DIR_4 = 12, //-- Store A (Direct) States
+          S_STA_DIR_5 = 13,
+          S_STA_DIR_6 = 14,
+          S_STA_DIR_7 = 15,
+          S_LDB_IMM_4 = 16, //-- Load B (Immediate) states
+          S_LDB_IMM_5 = 17,
+          S_LDB_IMM_6 = 18,
+          S_LDB_DIR_4 = 19, //-- Load B (Direct) states
+          S_LDB_DIR_5 = 20,
+          S_LDB_DIR_6 = 21,
+          S_LDB_DIR_7 = 22,
+          S_LDB_DIR_8 = 23,
+          S_STB_DIR_4 = 24, //-- Store B (Direct) States
+          S_STB_DIR_5 = 25,
+          S_STB_DIR_6 = 26,
+          S_STB_DIR_7 = 27,
+          S_BRA_4 = 28, //-- Branch Always States
+          S_BRA_5 = 29,
+          S_BRA_6 = 30,
+          S_BEQ_4 = 31, //-- Branch if Equal States
+          S_BEQ_5 = 32,
+          S_BEQ_6 = 33,
+          S_BEQ_7 = 34,
+          S_ADD_AB_4 = 35; //-- Addition States
 
-    // Transição de estados
-    always @(posedge clock or posedge reset) begin
-        if (reset) current_state <= FETCH;
-        else current_state <= next_state;
+	//ESTADO DE MEMORIA
+    always @ (posedge clock or negedge reset)
+        begin: STATE_MEMORY
+            if (!reset)
+                current_state <= S_FETCH_0;
+            else
+                current_state <= next_state;
     end
 
-    // Lógica da FSM
-    always @(*) begin
-        // Sinais padrão (desativados)
-        IR_Load = 0;
-        MAR_Load = 0;
-        PC_Load = 0;
-        PC_Inc = 0;
-        A_Load = 0;
-        B_Load = 0;
-        CCR_Load = 0;
-        ALU_Sel = 3'b000;
-        Bus1_Sel = 0;
-        Bus2_Sel = 0;
-        next_state = current_state;
-
-        case (current_state)
-            FETCH: begin
-                MAR_Load = 1;   // Carregar endereço no MAR
-                PC_Inc = 1;     // Incrementar PC
-                next_state = DECODE;
-            end
-            DECODE: begin
-                IR_Load = 1;    // Carregar instrução no IR
-                next_state = EXECUTE;
-            end
-            EXECUTE: begin
-                case (from_memory[7:4])  // Decodificar opcode
-                    4'b0000: begin // Exemplo: Soma
-                        A_Load = 1;
-                        B_Load = 1;
-                        ALU_Sel = 3'b000;
-                        CCR_Load = 1;
-                        next_state = WRITEBACK;
-                    end
-                    // Adicione outros casos de opcode aqui...
-                    default: next_state = FETCH;
-                endcase
-            end
-            WRITEBACK: begin
-                // Exemplo: Escrever na memória
-                if (write) begin
-                    Bus2_Sel = 1; // Selecionar dados para BUS2
+	//LOGICA DO PROXIMO ESTADO
+    always @ (current_state, IR, CCR_Result)
+        begin: NEXT_STATE_LOGIC
+            case (current_state)
+                S_FETCH_0 : next_state = S_FETCH_1; // Path for FETCH instruction
+                S_FETCH_1 : next_state = S_FETCH_2;
+                S_FETCH_2 : next_state = S_DECODE_3;
+                S_DECODE_3 : 
+                    if (IR == LDA_IMM) 
+                        next_state = S_LDA_IMM_4; // Load A (Immediate)
+                    else if (IR == LDA_DIR) 
+                        next_state = S_LDA_DIR_4; // Load A (Direct)
+                    else if (IR == STA_DIR) 
+                        next_state = S_STA_DIR_4; // Store A (Direct)
+                    else if (IR == LDB_IMM) 
+                        next_state = S_LDB_IMM_4; // Load B (Immediate)
+                    else if (IR == LDB_DIR) 
+                        next_state = S_LDB_DIR_4; // Load B (Direct)
+                    else if (IR == STB_DIR) 
+                        next_state = S_STB_DIR_4; // Store B (Direct)
+                    else if (IR == BRA) 
+                        next_state = S_BRA_4; // Branch Always
+                    else if (IR == ADD_AB) 
+                        next_state = S_ADD_AB_4; // Add A and B
+                    else 
+                        next_state = S_FETCH_0; // Default fallback
+                S_LDA_IMM_4 : next_state = S_LDA_IMM_5; // Path for LDA_IMM instruction
+                S_LDA_IMM_5 : next_state = S_LDA_IMM_6;
+                S_LDA_IMM_6 : next_state = S_FETCH_0;
+                // Next state logic for other states goes here...
+                default: next_state = S_FETCH_0; // Default case to avoid latches
+            endcase
+       end
+  
+	//portas de saida(comandos)
+  	always @ (current_state)
+        begin: OUTPUT_LOGIC
+            case (current_state)
+                S_FETCH_0 : begin 
+                    //-- Put PC onto MAR to provide address of Opcode
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
                 end
-                next_state = FETCH;
-            end
-        endcase
-    end
+                S_FETCH_1 : begin 
+                    //-- Increment PC, Opcode will be available next state
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+                // Output logic for other states goes here...
+                default: begin 
+                    //-- Default case to prevent latches
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00;
+                    Bus2_Sel = 2'b00;
+                    write = 0;
+                end
+            endcase
+      end
+
 
 endmodule
 
@@ -502,6 +740,3 @@ module computer (
     assign data_out = mem_data_out;
 
 endmodule
-
-
-
