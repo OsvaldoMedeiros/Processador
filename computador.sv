@@ -375,6 +375,7 @@ module data_path (
     input wire PC_Inc,
     input wire A_Load,
     input wire B_Load,
+  	input wire C_Load,
     input wire CCR_Load,
     input wire [7:0] from_memory,
     output wire [7:0] to_memory,
@@ -382,17 +383,18 @@ module data_path (
 );
 
     // Registradores
-    reg [7:0] IR, MAR, PC, A, B, CCR;
+  	reg [7:0] IR, MAR, PC, A, B, C, CCR;
     reg [7:0] BUS1, BUS2, ALU_Result;
   
   	
   //Multiplexadores(pag 23)
-  	always @ (Bus1_Sel, PC, A, B)
+  always @ (Bus1_Sel, PC, A, B, C)
 		begin: MUX_BUS1
 			case (Bus1_Sel)
 				2’b00 : Bus1 = PC;
 				2’b01 : Bus1 = A;
 				2’b10 : Bus1 = B;
+              	2’b11 : Bus1 = C;
 				default : Bus1 = 8’hXX;
 			endcase
 		end
@@ -446,11 +448,11 @@ module data_path (
 	always @ (posedge clock or negedge reset)
 		begin: A_REGISTER
 			if (!reset)
-				A <¼ 8’h00;
+				A <= 8’h00;
 			else
 			if (A_Load)
-				A <¼ Bus2;
-	end
+				A <= Bus2;
+	end         
 	//registrador b
     always @ (posedge clock or negedge reset)
 		begin: B_REGISTER
@@ -459,6 +461,15 @@ module data_path (
 			else
 			if (B_Load)
 				B <= Bus2;
+	end
+  	//registrador c
+    always @ (posedge clock or negedge reset)
+		begin: C_REGISTER
+			if (!reset)
+				C <= 8’h00;
+			else
+              if (C_Load)
+				C <= Bus2;
 	end
   //pag 24(CCR)
 	always @ (posedge clock or negedge reset)
@@ -505,6 +516,7 @@ module control_unit (
     output reg PC_Inc,
     output reg A_Load,
     output reg B_Load,
+  	output reg C_Load,
     output reg CCR_Load,
     output reg [2:0] ALU_Sel,
     output reg Bus1_Sel,
@@ -589,6 +601,57 @@ module control_unit (
                 S_LDA_IMM_4 : next_state = S_LDA_IMM_5; // Path for LDA_IMM instruction
                 S_LDA_IMM_5 : next_state = S_LDA_IMM_6;
                 S_LDA_IMM_6 : next_state = S_FETCH_0;
+              	S_LDB_IMM_4 : next_state = S_LDB_IMM_5; // Path for LDB_IMM instruction
+                S_LDB_IMM_5 : next_state = S_LDB_IMM_6;
+                S_LDB_IMM_6 : next_state = S_FETCH_0;
+              	S_LDC_IMM_4 : next_state = S_LDC_IMM_5; // Path for LDC_IMM instruction
+                S_LDC_IMM_5 : next_state = S_LDC_IMM_6;
+                S_LDC_IMM_6 : next_state = S_FETCH_0;
+              	//LD*_DIR
+              	S_LDA_DIR_4 : next_state = S_LDA_DIR_5; // Path for LDA_DIR instruction
+                S_LDA_DIR_5 : next_state = S_LDA_DIR_6;
+                S_LDA_DIR_6 : next_state = S_LDA_DIR_7;
+              	S_LDA_DIR_7 : next_state = S_LDA_DIR_8;
+              	S_LDA_DIR_8 : next_state = S_FETCH_0;
+              	S_LDB_DIR_4 : next_state = S_LDB_DIR_5; // Path for LDB_DIR instruction
+                S_LDB_DIR_5 : next_state = S_LDB_DIR_6;
+                S_LDB_DIR_5 : next_state = S_LDB_DIR_6;
+                S_LDB_DIR_6 : next_state = S_LDB_DIR_7;
+              	S_LDB_DIR_7 : next_state = S_LDB_DIR_8;
+              	S_LDB_DIR_8 : next_state = S_FETCH_0;
+              	S_LDC_DIR_4 : next_state = S_LDC_DIR_5; // Path for LDC_DIR instruction
+                S_LDC_DIR_5 : next_state = S_LDC_DIR_6;
+                S_LDC_DIR_5 : next_state = S_LDC_DIR_6;
+                S_LDC_DIR_6 : next_state = S_LDC_DIR_7;
+              	S_LDC_DIR_7 : next_state = S_LDC_DIR_8;
+              	S_LDC_DIR_8 : next_state = S_FETCH_0;
+              	//ST*_DIR
+              	S_STA_DIR_4 : next_state = S_STA_DIR_5; // Path for STA_DIR instruction
+                S_STA_DIR_5 : next_state = S_STA_DIR_6;
+                S_STA_DIR_6 : next_state = S_STA_DIR_7;
+              	S_STA_DIR_7 : next_state = S_FETCH_0;
+              	S_STB_DIR_4 : next_state = S_STB_DIR_5; // Path for STB_DIR instruction
+                S_STB_DIR_5 : next_state = S_STB_DIR_6;
+                S_STB_DIR_5 : next_state = S_STB_DIR_6;
+                S_STB_DIR_6 : next_state = S_STB_DIR_7;
+              	S_STB_DIR_7 : next_state = S_FETCH_0;
+              	S_STC_DIR_4 : next_state = S_STC_DIR_5; // Path for STC_DIR instruction
+                S_STC_DIR_5 : next_state = S_STC_DIR_6;
+                S_STC_DIR_5 : next_state = S_STC_DIR_6;
+                S_STC_DIR_6 : next_state = S_STC_DIR_7;
+              	S_STC_DIR_7 : next_state = S_FETCH_0;
+              	//ADD
+              	S_ADD_AB_4 : next_state = S_FETCH_0; // Path for ADD_AB instruction
+              	//BRA(SEM CONDICIONAL)
+              	S_BRA_4 : next_state = S_BRA_5; // Path for BRA instruction
+                S_BRA_5 : next_state = S_BRA_6;
+                S_BRA_6 : next_state = S_FETCH_0;
+              	//BEQ(COM CONDICIONAL)
+              	S_BEQ_4 : next_state = S_BEQ_5; // Path for BEQ instruction(caso dê bom)
+                S_BEQ_5 : next_state = S_BEQ_6;
+                S_BEQ_6 : next_state = S_FETCH_0;
+              	S_BEQ_7 : next_state = S_FETCH_0; // Path for BEQ instruction(caso dê ruim)
+              
                 // Next state logic for other states goes here...
                 default: next_state = S_FETCH_0; // Default case to avoid latches
             endcase
@@ -606,6 +669,7 @@ module control_unit (
                     PC_Inc = 0;
                     A_Load = 0;
                     B_Load = 0;
+                  	C_Load = 0;
                     ALU_Sel = 3'b000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
@@ -620,13 +684,707 @@ module control_unit (
                     PC_Inc = 1;
                     A_Load = 0;
                     B_Load = 0;
+                  	C_Load = 0;
                     ALU_Sel = 3'b000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 0;
                 end
-                // Output logic for other states goes here...
+              	S_FETCH_2 : begin 
+                    //-- ir recebe informação da memória
+                    IR_Load = 1;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//***********
+              	//LDA_DIR
+              	S_LDA_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_DIR_6 : begin 
+                    //-- registrador A recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_DIR_7 : begin 
+                    //-- registrador A recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = ;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_DIR_8 : begin 
+                    //-- registrador A recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 1;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//LDB_DIR
+              	S_LDB_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC atual
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_DIR_6 : begin 
+                  	//-- MAR recebe informação da memória(local onde tá o valor a ser armazenado)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_DIR_7 : begin 
+                    //-- so pra da tempo da memoria responder
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_DIR_8 : begin 
+                    //-- registrador B recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 1;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//LDC_DIR
+              	S_LDC_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC atual
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_DIR_6 : begin 
+                  	//-- MAR recebe informação da memória(local onde tá o valor a ser armazenado)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_DIR_7 : begin 
+                    //-- so pra da tempo da memoria responder
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_DIR_8 : begin 
+                    //-- registrador c recebe informação da memória
+                    IR_Load = 0; 
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 1;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//****************************
+              	//LDA_IMM
+              	S_LDA_IMM_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_IMM_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDA_IMM_6 : begin 
+                    //-- registrador A recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 1;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//LDB_IMM
+              	S_LDB_IMM_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_IMM_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDB_IMM_6 : begin 
+                    //-- B recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 1;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//LDC_IMM
+              	S_LDC_IMM_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_IMM_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_LDC_IMM_6 : begin 
+                    //-- C recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 1;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//**********************************************
+              	//STA_DIR
+              	S_STA_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STA_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STA_DIR_6 : begin 
+                    //-- MAR recebe o oprando de onde tem que guardar na memoria
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STA_DIR_7 : begin 
+                    //-- registrador A passa a informação para a memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 1;
+                end
+              	//STB_DIR
+              	S_STB_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STB_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STB_DIR_6 : begin 
+                    //-- MAR recebe o oprando de onde tem que guardar na memoria
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STB_DIR_7 : begin 
+                    //-- registrador B passa a informação para a memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 1;
+                end
+              	//STC_DIR
+              	S_STC_DIR_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STC_DIR_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STC_DIR_6 : begin 
+                    //-- MAR recebe o oprando de onde tem que guardar na memoria
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_STC_DIR_7 : begin 
+                    //-- registrador C passa a informação para a memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 1;
+                end
+              	//********************
+              	//ADD_AB
+              	S_ADD_AB_4 : begin 
+                  	//-- soma e joga o resultado no A
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 1;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000; //n sei qual é o ADD
+                    CCR_Load = 1;
+                    Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//****************************
+              	//BRA
+              	S_BRA_4 : begin 
+                  //-- MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BRA_5 : begin 
+                    //-- demora um ciclo de clock para receber o valor do operand 
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BRA_6 : begin 
+                    //-- atualiza o PC pela posição  dado pelo operand
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	//************************************************
+              	//BEQ
+              	S_BEQ_4 : begin 
+                  //-- MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BEQ_5 : begin 
+                    //-- demora um ciclo de clock para receber o valor do operand 
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BEQ_6 : begin 
+                    //-- atualiza o PC pela posição  dado pelo operand
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 1;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BEQ_7 : begin 
+                    //-- se a condicional for falsa ele apenas continua normalmnete incrementando o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	// Output logic for other states goes here...
                 default: begin 
                     //-- Default case to prevent latches
                     IR_Load = 0;
@@ -635,6 +1393,7 @@ module control_unit (
                     PC_Inc = 0;
                     A_Load = 0;
                     B_Load = 0;
+                  	C_Load = 0;
                     ALU_Sel = 3'b000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00;
