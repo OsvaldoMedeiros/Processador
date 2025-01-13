@@ -35,16 +35,16 @@ module tb_logic_controller;
         opcode = 4'b0100; A = 4'b1101; B = 4'b0110; #10;
         $display("NAND: A=%b B=%b => Resultado: Y=%b", A, B, Y);
 
-        // Testando a operação NOR
+        // NOR
         opcode = 4'b0101; A = 4'b1101; B = 4'b0110; #10;
         $display("NOR: A=%b B=%b => Resultado: Y=%b", A, B, Y);
 
-        // Testando a operação XNOR
+        // XNOR
         opcode = 4'b0110; A = 4'b1101; B = 4'b0110; #10;
         $display("XNOR: A=%b B=%b => Resultado: Y=%b", A, B, Y);
 
-        // Testando a operação NOT
-        opcode = 4'b0111; A = 4'b1101; B = 4'bxxxx; #10;  // Apenas A é utilizado
+        // NOT
+        opcode = 4'b0111; A = 4'b1101; B = 4'bxxxx; #10;  // apenas A é utilizado
         $display("NOT: A=%b => Resultado: Y=%b", A, Y);
 
         // Finaliza a simulação
