@@ -532,21 +532,21 @@ module control_unit (
                         next_state = S_STB_DIR_4; // Store B (Direct) 
                     else if (IR == BRA) 
                         next_state = S_BRA_4; // Branch 
-                    else if(IR == BEQ && CCR[1] == 0) // Z = 0 -> significa que a condicional de BEQ não foi atendida(Z=0)
+                    else if(IR == BEQ && CCR[2] == 0) // Z = 0 -> significa que a condicional de BEQ não foi atendida(Z=0)
                         next_state = S_BEQ_7;
-                    else if(IR == BEQ && CCR[1] == 1) // Z é o segundo bit mais significativo de CCR -> significa que a condicional de BEQ foi atendida(Z=1)
+                    else if(IR == BEQ && CCR[2] == 1) // Z é o segundo bit mais significativo de CCR -> significa que a condicional de BEQ foi atendida(Z=1)
                         next_state = S_BEQ_4;
-                    else if(IR == BNQ && CCR[1] == 0) // Z = 0, significa que a condicional de BNQ foi atendida
+                    else if(IR == BNQ && CCR[2] == 0) // Z = 0, significa que a condicional de BNQ foi atendida
                         next_state = S_BNQ_4;
-                    else if(IR == BNQ && CCR[1] == 1) // Z = 1, significa que a condicional de BNQ não foi atendida
+                    else if(IR == BNQ && CCR[2] == 1) // Z = 1, significa que a condicional de BNQ não foi atendida
                         next_state = S_BNQ_7;
-                    else if(IR == BGT && CCR[0] == 0 && CCR[1] == 0 && CCR[2] == 0) // N = 0 = V, Z = 0 significa que a condicional de BGT foi atendida
+                    else if(IR == BGT && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // N = 0 = V, Z = 0 significa que a condicional de BGT foi atendida
                         next_state = S_BGT_4;
-                    else if(IR == BGT && CCR[0] == 1 && CCR[1] == 0 && CCR[2] == 0) // N = 1, Z = 0 significa que a condicional de BGT não foi atendida
+                    else if(IR == BGT && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // N = 1, Z = 0 significa que a condicional de BGT não foi atendida
                         next_state = S_BGT_7;
-                    else if(IR == BLT && CCR[0] == 1 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT foi atendida
+                    else if(IR == BLT && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT foi atendida
                         next_state = S_BLT_4;
-                    else if(IR == BLT && CCR[0] == 0 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT não foi atendida
+                    else if(IR == BLT && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT não foi atendida
                         next_state = S_BLT_7;
                     else if (IR == ADD_AB) 
                         next_state = S_ADD_AB_4; // Add A and B
