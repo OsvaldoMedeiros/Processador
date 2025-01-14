@@ -2,20 +2,21 @@
 
 
 //PROGRAM MEMORY 
-module rom_128x8_sync ( // essa é a program memory, é a memória que armazena as intruções e as informações pertinentes para a realização das instruções(opcode e operand). È uma ROM que podem ser armazenadas 128 palavras de 8 bits de tamnho cada(128x8)
+module programmemory ( // essa é a program memory, é a memória que armazena as intruções e as informações pertinentes para a realização das instruções(opcode e operand). È uma ROM que podem ser armazenadas 128 palavras de 8 bits de tamnho cada(128x8)
     input wire [7:0] address,  // Endereço da ROM
     input wire clock,          // Clock
     output reg [7:0] data_out  // Dados de saída
+    input wire [7:0] data_in,  // Dados de entrada para escrita
 );
-    reg [7:0] rom [0:127];  // Memória ROM de 128 endereços, 8 bits cada
+    reg [7:0] prmemo [0:127];  // Memória ROM de 128 endereços, 8 bits cada
 
 
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da program memory
 		begin
           if ( (address >= 0) && (address <= 127) )
-				EN = 1’b1;
+				EN = 1'b1;
 			else
-				EN = 1’b0;
+				EN = 1'b0;
 			end
 
 	always @ (posedge clock) // verifica se o endereço é coerente antes de enviar os dados para a saída
@@ -40,9 +41,9 @@ module rw_96x8_sync ( // essa é a data memory, é uma memória normal. Aparente
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
 		begin
           if ( (address >= 128) && (address <= 175) )
-				EN = 1’b1;
+				EN = 1'b1;
 			else
-				EN = 1’b0;
+				EN = 1'b0;
 		end
     
   always @ (posedge clock) // verifica se o endereço é coerente antes de escrever ou enviar os dados
@@ -69,9 +70,9 @@ module pilha ( // essa é a data memory, é uma memória normal. Aparentemente, 
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
 		begin
           if ( (address >= 176) && (address <= 223) )
-				EN = 1’b1;
+				EN = 1'b1;
 			else
-				EN = 1’b0;
+				EN = 1'b0;
 		end
     
   always @ (posedge clock) // verifica se o endereço é coerente antes de escrever ou enviar os dados
@@ -100,7 +101,7 @@ module memory (
     wire [7:0] ram_data_out;  // Saída da RAM
 
     // Instanciação da PROGRAM MEMORY
-    rom_128x8_sync rom_inst (
+    programmemory prmemo (
         .address(address),
         .clock(clock),
         .data_out(rom_data_out)
@@ -116,7 +117,7 @@ module memory (
     );
   
     // Instanciação da PILHA
-    pilha (
+    pilha pilha(
         .address(address),
         .clock(clock),
         .write(write),
@@ -126,151 +127,48 @@ module memory (
     
 
   //vou ficar faltando com uma informação precisa de como essa parte funciona, dps verifiquem na pag 20 do arquivo ou 162 do livro a explicação. Aparentemente, isso é para pegar a informação do data_in e jogar para a porta de saída selecionada pelo endereço.O !reset é para verificar se porta pode ta funcionando e o write se tá podendo receber as informações do data_in. O <= significa atribuição não bloqueada, pelo oq eu entendi siginifica q todas as portas vão receber o valor ao mesmo tempo, n sendo uma atribuição imediata como no "=", para ser algo mais semelhante com os flip flops na vida real na qual só é atualizado quando passa o ciclo do clock
-  always @(posedge clock or posedge reset) begin 
-    	//-- port_out_00 (address E0)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_00 <= 8’h00;
-				else
-                  if ((address == 8’hE0) && (write))
-					port_out_00 <= data_in;
-		end
-		//-- port_out_01 (address E1)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE1) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E2)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE2) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E3)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE3) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E4)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE4) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E5)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE5) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E6)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE6) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E7)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE7) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E8)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE8) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address E9)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hE9) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address EA-10)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hEA) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address EB-11)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hEB) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address EC-12)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hEC) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address ED-13)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hED) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address EE-14)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hEE) && (write))
-					port_out_01 <= data_in;
-		end
-    //-- port_out_01 (address EF-15)
-		always @ (posedge clock or negedge reset)
-			begin
-				if (!reset)
-					port_out_01 <= 8’h00;
-				else
-                  if ((address == 8’hEF) && (write))
-					port_out_01 <= data_in;
-		end
+  // Bloco combinando toda a lógica de endereçamento
+always @(posedge clock or negedge reset) begin
+    if (!reset) begin
+        port_out_00 <= 8'h00;
+        port_out_01 <= 8'h00;
+        port_out_02 <= 8'h00;
+        port_out_03 <= 8'h00;
+        port_out_04 <= 8'h00;
+        port_out_05 <= 8'h00;
+        port_out_06 <= 8'h00;
+        port_out_07 <= 8'h00;
+        port_out_08 <= 8'h00;
+        port_out_09 <= 8'h00;
+        port_out_10 <= 8'h00;
+        port_out_11 <= 8'h00;
+        port_out_12 <= 8'h00;
+        port_out_13 <= 8'h00;
+        port_out_14 <= 8'h00;
+        port_out_15 <= 8'h00;
+    end else if (write) begin
+        case (address)
+            8'hE0: port_out_00 <= data_in;
+            8'hE1: port_out_01 <= data_in;
+            8'hE2: port_out_02 <= data_in;
+            8'hE3: port_out_03 <= data_in;
+            8'hE4: port_out_04 <= data_in;
+            8'hE5: port_out_05 <= data_in;
+            8'hE6: port_out_06 <= data_in;
+            8'hE7: port_out_07 <= data_in;
+            8'hE8: port_out_08 <= data_in;
+            8'hE9: port_out_09 <= data_in;
+            8'hEA: port_out_10 <= data_in;
+            8'hEB: port_out_11 <= data_in;
+            8'hEC: port_out_12 <= data_in;
+            8'hED: port_out_13 <= data_in;
+            8'hEE: port_out_14 <= data_in;
+            8'hEF: port_out_15 <= data_in;
+            default: ; // Nenhuma operação
+        endcase
+    end
+end
+
 		
     
     
@@ -331,13 +229,24 @@ module memory (
 module alu( // n alterei nada na ula enviada pelo gpt
     input wire [7:0] A,         // Operando A
     input wire [7:0] B,         // Operando B
-    input wire [2:0] ALU_Sel,   // Selector da operação
+    input wire [3:0] ALU_Sel,   // Selector da operação
     output reg [7:0] ALU_Out,   // Resultado da ALU
     output reg Zero,            // Flag Zero
     output reg Negative,        // Flag Negativo
     output reg Carry,           // Flag Carry
     output reg Overflow         // Flag Overflow
 );
+
+    wire [3:0] and_result, or_result, xor_result, nand_result, nor_result, xnor_result, not_result;
+    // instanciando as portas lógicas
+    and_gate and_inst(.Y(and_result), .A(A[3:0]), .B(B[3:0]));
+    or_gate or_inst(.Y(or_result), .A(A[3:0]), .B(B[3:0]));
+    xor_gate xor_inst(.Y(xor_result), .A(A[3:0]), .B(B[3:0]));
+    nand_gate nand_inst(.Y(nand_result), .A(A[3:0]), .B(B[3:0]));
+    nor_gate nor_inst(.Y(nor_result), .A(A[3:0]), .B(B[3:0]));
+    xnor_gate xnor_inst(.Y(xnor_result), .A(A[3:0]), .B(B[3:0]));
+    not_gate not_inst(.Y(not_result), .A(A[3:0]));
+
     always @(*) begin
         // Operações baseadas no seletor
         case (ALU_Sel)
@@ -352,11 +261,11 @@ module alu( // n alterei nada na ula enviada pelo gpt
             default: ALU_Out = 8'b00000000;   // Valor padrão
         endcase
 
-        // Atualização das flags
+        /*// Atualização das flags
         Zero     = (ALU_Out == 8'b0);         // Flag Zero
         Negative = ALU_Out[7];                // Flag Negativo (MSB = 1)
         Carry    = (A + B > 8'b11111111);     // Carry gerado na soma
-        Overflow = ((A[7] & B[7] & ~ALU_Out[7]) | (~A[7] & ~B[7] & ALU_Out[7])); // Overflow
+        Overflow = ((A[7] & B[7] & ~ALU_Out[7]) | (~A[7] & ~B[7] & ALU_Out[7])); // Overflow*/
     end
 endmodule
    
@@ -368,7 +277,7 @@ module data_path (
     input wire reset,
     input wire Bus1_Sel,
     input wire Bus2_Sel,
-    input wire [2:0] ALU_Sel,
+    input wire [3:0] ALU_Sel,
     input wire IR_Load,
     input wire MAR_Load,
     input wire PC_Load,
@@ -379,7 +288,10 @@ module data_path (
     input wire CCR_Load,
     input wire [7:0] from_memory,
     output wire [7:0] to_memory,
-    output wire [7:0] address
+    output wire [7:0] address,
+    output wire [7:0] IR_Out,
+    output wire CCR_Out
+
 );
 
     // Registradores
@@ -391,20 +303,20 @@ module data_path (
   always @ (Bus1_Sel, PC, A, B, C)
 		begin: MUX_BUS1
 			case (Bus1_Sel)
-				2’b00 : Bus1 = PC;
-				2’b01 : Bus1 = A;
-				2’b10 : Bus1 = B;
-              	2’b11 : Bus1 = C;
-				default : Bus1 = 8’hXX;
+				2'b00 : Bus1 = PC;
+				2'b01 : Bus1 = A;
+				2'b10 : Bus1 = B;
+        2'b11 : Bus1 = C;
+				default : Bus1 = 8'hXX;
 			endcase
 		end
 	always @ (Bus2_Sel, ALU_Result, Bus1, from_memory)
 		begin: MUX_BUS2
 			case (Bus2_Sel)
-				2’b00 : Bus2 = ALU_Result;
-				2’b01 : Bus2 = Bus1;
-				2’b10 : Bus2 = from_memory;
-				default : Bus1 = 8’hXX;
+				2'b00 : Bus2 = ALU_Result;
+				2'b01 : Bus2 = Bus1;
+				2'b10 : Bus2 = from_memory;
+				default : Bus1 = 8'hXX;
 			endcase
 		end
 	always @ (Bus1, MAR)
@@ -418,7 +330,7 @@ module data_path (
     always @ (posedge clock or negedge reset)
 		begin: INSTRUCTION_REGISTER
 			if (!reset)
-				IR <= 8’h00;
+				IR <= 8'h00;
 			else
 			if (IR_Load)
 				IR <= Bus2;
@@ -427,7 +339,7 @@ module data_path (
   	always @ (posedge clock or negedge reset)
 		begin: MEMORY_ADDRESS_REGISTER
 			if (!reset)
-				MAR <= 8’h00;
+				MAR <= 8'h00;
 			else
 			if (MAR_Load)
 				MAR <= Bus2;
@@ -436,7 +348,7 @@ module data_path (
 	always @ (posedge clock or negedge reset)
 		begin: PROGRAM_COUNTER
 			if (!reset)
-				PC <= 8’h00;
+				PC <= 8'h00;
 			else
 			if (PC_Load)
 				PC <= Bus2;
@@ -448,7 +360,7 @@ module data_path (
 	always @ (posedge clock or negedge reset)
 		begin: A_REGISTER
 			if (!reset)
-				A <= 8’h00;
+				A <= 8'h00;
 			else
 			if (A_Load)
 				A <= Bus2;
@@ -457,7 +369,7 @@ module data_path (
     always @ (posedge clock or negedge reset)
 		begin: B_REGISTER
 			if (!reset)
-				B <= 8’h00;
+				B <= 8'h00;
 			else
 			if (B_Load)
 				B <= Bus2;
@@ -466,7 +378,7 @@ module data_path (
     always @ (posedge clock or negedge reset)
 		begin: C_REGISTER
 			if (!reset)
-				C <= 8’h00;
+				C <= 8'h00;
 			else
               if (C_Load)
 				C <= Bus2;
@@ -475,7 +387,7 @@ module data_path (
 	always @ (posedge clock or negedge reset)
 		begin: CONDITION_CODE_REGISTER
 			if (!reset)
-				CCR_Result <= 8’h00;
+				CCR_Result <= 8'h00;
 			else
 			if (CCR_Load)
 				CCR_Result <= NZVC;
@@ -483,8 +395,8 @@ module data_path (
   
   
   // Endereço e saída de dados(??? ideia do gpt n sei se mantenho)
-    assign address = MAR;
-    assign to_memory = A; // Dado a ser enviado para a memória (exemplo)
+  //  assign address = MAR;
+  //  assign to_memory = A; // Dado a ser enviado para a memória (exemplo)
 
     
 
@@ -492,12 +404,12 @@ module data_path (
     alu alu_instance (
         .A(A),
         .B(B),
-        .ALU_Sel(ALU_Sel),
-        .ALU_Out(ALU_Out),
+        .ALU_Sel(ALU_Sel)
+        /*.ALU_Out(ALU_Out),
         .Zero(Zero),
         .Negative(Negative),
         .Carry(Carry),
-        .Overflow(Overflow)
+        .Overflow(Overflow)*/
     );
 
 
@@ -510,6 +422,8 @@ module control_unit (
     input wire reset,
     input wire write,
     input wire [7:0] from_memory,
+    input wire [7:0] IR,
+    input wire [3:0] CCR,
     output reg IR_Load,
     output reg MAR_Load,
     output reg PC_Load,
@@ -518,7 +432,7 @@ module control_unit (
     output reg B_Load,
   	output reg C_Load,
     output reg CCR_Load,
-    output reg [2:0] ALU_Sel,
+    output reg [3:0] ALU_Sel,
     output reg Bus1_Sel,
     output reg Bus2_Sel
 );
@@ -554,14 +468,38 @@ module control_unit (
           S_STB_DIR_5 = 25,
           S_STB_DIR_6 = 26,
           S_STB_DIR_7 = 27,
-          S_BRA_4 = 28, //-- Branch Always States
-          S_BRA_5 = 29,
-          S_BRA_6 = 30,
-          S_BEQ_4 = 31, //-- Branch if Equal States
-          S_BEQ_5 = 32,
-          S_BEQ_6 = 33,
-          S_BEQ_7 = 34,
-          S_ADD_AB_4 = 35; //-- Addition States
+  		  S_LDB_IMM_4 = 28, //-- Load C (Immediate) states
+          S_LDB_IMM_5 = 29,
+          S_LDB_IMM_6 = 30,
+          S_LDB_DIR_4 = 31, //-- Load C (Direct) states
+          S_LDB_DIR_5 = 32,
+          S_LDB_DIR_6 = 33,
+          S_LDB_DIR_7 = 34,
+          S_LDB_DIR_8 = 35,
+          S_STB_DIR_4 = 36, //-- Store C (Direct) States
+          S_STB_DIR_5 = 37,
+          S_STB_DIR_6 = 38,
+          S_STB_DIR_7 = 39,
+          S_BRA_4 = 40, //-- Branch Always States
+          S_BRA_5 = 41,
+          S_BRA_6 = 42,
+          S_BEQ_4 = 43, //-- Branch if Equal Zero States
+          S_BEQ_5 = 44,
+          S_BEQ_6 = 45,
+          S_BEQ_7 = 46,
+          S_BNQ_4 = 47, //-- Branch if Not Equal To Zero
+          S_BNQ_5 = 48,
+          S_BNQ_6 = 49,
+          S_BNQ_7 = 50,
+          S_BGT_4 = 51, //-- Branch if Greater Than
+          S_BGT_5 = 52,
+          S_BGT_6 = 53, 
+          S_BGT_7 = 54,
+          S_BLT_4 = 55, //-- Branch if Less Than
+          S_BLT_5 = 56,
+          S_BLT_6 = 57,
+          S_BLT_7 = 58,
+          S_ADD_AB_4 = 59; //-- Addition States
 
 	//ESTADO DE MEMORIA
     always @ (posedge clock or negedge reset)
@@ -573,7 +511,7 @@ module control_unit (
     end
 
 	//LOGICA DO PROXIMO ESTADO
-    always @ (current_state, IR, CCR_Result)
+    always @ (current_state, IR, CCR)
         begin: NEXT_STATE_LOGIC
             case (current_state)
                 S_FETCH_0 : next_state = S_FETCH_1; // Path for FETCH instruction
@@ -591,9 +529,25 @@ module control_unit (
                     else if (IR == LDB_DIR) 
                         next_state = S_LDB_DIR_4; // Load B (Direct)
                     else if (IR == STB_DIR) 
-                        next_state = S_STB_DIR_4; // Store B (Direct)
+                        next_state = S_STB_DIR_4; // Store B (Direct) 
                     else if (IR == BRA) 
-                        next_state = S_BRA_4; // Branch Always
+                        next_state = S_BRA_4; // Branch 
+                    else if(IR == BEQ && CCR[1] == 0) // Z = 0 -> significa que a condicional de BEQ não foi atendida(Z=0)
+                        next_state = S_BEQ_7;
+                    else if(IR == BEQ && CCR[1] == 1) // Z é o segundo bit mais significativo de CCR -> significa que a condicional de BEQ foi atendida(Z=1)
+                        next_state = S_BEQ_4;
+                    else if(IR == BNQ && CCR[1] == 0) // Z = 0, significa que a condicional de BNQ foi atendida
+                        next_state = S_BNQ_4;
+                    else if(IR == BNQ && CCR[1] == 1) // Z = 1, significa que a condicional de BNQ não foi atendida
+                        next_state = S_BNQ_7;
+                    else if(IR == BGT && CCR[0] == 0 && CCR[1] == 0 && CCR[2] == 0) // N = 0 = V, Z = 0 significa que a condicional de BGT foi atendida
+                        next_state = S_BGT_4;
+                    else if(IR == BGT && CCR[0] == 1 && CCR[1] == 0 && CCR[2] == 0) // N = 1, Z = 0 significa que a condicional de BGT não foi atendida
+                        next_state = S_BGT_7;
+                    else if(IR == BLT && CCR[0] == 1 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT foi atendida
+                        next_state = S_BLT_4;
+                    else if(IR == BLT && CCR[0] == 0 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT não foi atendida
+                        next_state = S_BLT_7;
                     else if (IR == ADD_AB) 
                         next_state = S_ADD_AB_4; // Add A and B
                     else 
@@ -651,7 +605,22 @@ module control_unit (
                 S_BEQ_5 : next_state = S_BEQ_6;
                 S_BEQ_6 : next_state = S_FETCH_0;
               	S_BEQ_7 : next_state = S_FETCH_0; // Path for BEQ instruction(caso dê ruim)
-              
+                //BNQ
+                S_BNQ_4 : next_state = S_BNQ_5; // Path for BNQ instruction(caso dê bom)
+                S_BNQ_5 : next_state = S_BNQ_6;
+                S_BNQ_6 : next_state = S_FETCH_0;
+              	S_BNQ_7 : next_state = S_FETCH_0; // Path for BNQ instruction(caso dê ruim)
+                //BGT
+                S_BGT_4 : next_state = S_BGT_5; // Path for BGT instruction(caso dê bom)
+                S_BGT_5 : next_state = S_BGT_6;
+                S_BGT_6 : next_state = S_FETCH_0;
+              	S_BGT_7 : next_state = S_FETCH_0; // Path for BGT instruction(caso dê ruim)
+                //BLT
+                S_BLT_4 : next_state = S_BLT_5; // Path for BLT instruction(caso dê bom)
+                S_BLT_5 : next_state = S_BLT_6;
+                S_BLT_6 : next_state = S_FETCH_0;
+              	S_BLT_7 : next_state = S_FETCH_0; // Path for BLT instruction(caso dê ruim)
+
                 // Next state logic for other states goes here...
                 default: next_state = S_FETCH_0; // Default case to avoid latches
             endcase
@@ -670,7 +639,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -685,7 +654,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -700,7 +669,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -717,7 +686,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -732,7 +701,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -747,22 +716,22 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 0;
                 end
               	S_LDA_DIR_7 : begin 
-                    //-- registrador A recebe informação da memória
+                    //-- da tempo para receber
                     IR_Load = 0;
-                    MAR_Load = ;
+                    MAR_Load = 0;
                     PC_Load = 0;
                     PC_Inc = 0;
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -777,7 +746,7 @@ module control_unit (
                     A_Load = 1;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -793,7 +762,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -808,7 +777,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -838,7 +807,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -853,7 +822,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 1;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -869,7 +838,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -884,7 +853,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -899,7 +868,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -914,7 +883,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -929,7 +898,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 1;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -946,7 +915,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -961,7 +930,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -976,7 +945,7 @@ module control_unit (
                     A_Load = 1;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -992,7 +961,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1007,7 +976,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1022,7 +991,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 1;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1038,7 +1007,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1053,7 +1022,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1068,7 +1037,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 1;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1085,7 +1054,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1100,7 +1069,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1115,7 +1084,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1130,7 +1099,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1146,7 +1115,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1161,7 +1130,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1176,7 +1145,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1191,7 +1160,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1207,7 +1176,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1222,7 +1191,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1237,7 +1206,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1252,7 +1221,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1266,10 +1235,10 @@ module control_unit (
                     MAR_Load = 0;
                     PC_Load = 0;
                     PC_Inc = 0;
-                    A_Load = 1;
+                    A_Load = 0;
                     B_Load = 0;
-                  	C_Load = 0;
-                    ALU_Sel = 3'b000; //n sei qual é o ADD
+                  	C_Load = 1;
+                    ALU_Sel = 4'b0000; //n sei qual é o ADD
                     CCR_Load = 1;
                     Bus1_Sel = 2'b01; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1286,7 +1255,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1301,7 +1270,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1311,12 +1280,12 @@ module control_unit (
                     //-- atualiza o PC pela posição  dado pelo operand
                     IR_Load = 0;
                     MAR_Load = 0;
-                    PC_Load = 0;
-                    PC_Inc = 1;
+                    PC_Load = 1;
+                    PC_Inc = 0;
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1333,7 +1302,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -1384,6 +1353,186 @@ module control_unit (
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 0;
                 end
+                S_BNQ_4 : begin 
+                  //-- MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BNQ_5 : begin 
+                    //-- demora um ciclo de clock para receber o valor do operand 
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 3'b000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BNQ_6 : begin 
+                    //-- atualiza o PC pela posição  dado pelo operand
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 1;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BNQ_7 : begin 
+                    //-- se a condicional for falsa ele apenas continua normalmnete incrementando o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+                S_BGT_4 : begin 
+                  //-- MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BGT_5 : begin 
+                    //-- demora um ciclo de clock para receber o valor do operand 
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BGT_6 : begin 
+                    //-- atualiza o PC pela posição  dado pelo operand
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 1;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BGT_7 : begin 
+                    //-- se a condicional for falsa ele apenas continua normalmnete incrementando o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+                S_BLT_4 : begin 
+                  //-- MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BLT_5 : begin 
+                    //-- demora um ciclo de clock para receber o valor do operand 
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BLT_6 : begin 
+                    //-- atualiza o PC pela posição  dado pelo operand
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 1;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
+              	S_BLT_7 : begin 
+                    //-- se a condicional for falsa ele apenas continua normalmnete incrementando o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    ALU_Sel = 4'b0000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 2'b00; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                end
               	// Output logic for other states goes here...
                 default: begin 
                     //-- Default case to prevent latches
@@ -1394,7 +1543,7 @@ module control_unit (
                     A_Load = 0;
                     B_Load = 0;
                   	C_Load = 0;
-                    ALU_Sel = 3'b000;
+                    ALU_Sel = 4'b0000;
                     CCR_Load = 0;
                     Bus1_Sel = 2'b00;
                     Bus2_Sel = 2'b00;
