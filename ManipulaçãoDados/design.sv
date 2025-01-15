@@ -1,19 +1,34 @@
-`define WORD_SIZE 8 
+`define WORD_SIZE 8
 
-// inverte bit 
-module BitInvert (
+// ----------SetRegist--------
+module SetBit (
+  input [`WORD_SIZE-1:0] reg_in,
+  input [3:0] pos,
+  output [`WORD_SIZE-1:0] reg_out
+);
+
+  wire [`WORD_SIZE-1:0] mask;
+  assign mask = (1 << pos); // Gera máscara com 1 na posição desejada
+  assign reg_out = reg_in | mask; // Usa OR para setar o bit em 1
+
+endmodule
+
+
+//---------- ClearBit---------
+module ClearBit (
   input [`WORD_SIZE-1:0] reg_in,
   input [3:0] pos,
   output [`WORD_SIZE-1:0] reg_out
 );
   
-  wire [`WORD_SIZE:0] mask;
-  assign mask = (1 << pos); // gera mascara com 1 na posição de interesse
-  assign reg_out = reg_in ^ mask; // mascara aplica XOR na entrada 
+  wire [`WORD_SIZE-1:0] mask;
+  assign mask = ~(1 << pos);
+  assign reg_out = reg_in & mask;
   
 endmodule
 
-// Deslocamento e rotação de bits
+
+//-------- Deslocamento e rotação de bits----------
 module BitShiftRotate (
   input [7:0] reg_in, // registrador de entrada
   input shift_enable, // habilita o deslocamento
@@ -45,13 +60,14 @@ module BitShiftRotate (
       
     end else begin
       reg_out = reg_in;
-      carry_flag = 0;
-      
+      carry_flag = 0;      
     end
   end
 endmodule
 
-//Controle de flags
+
+
+//-------Controle de flags----------
 module FlagControl (
   input clk, reset, 
   input zero_flag_in, //zero flag gerada pela operação
