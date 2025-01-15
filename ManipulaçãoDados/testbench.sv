@@ -3,10 +3,11 @@ module tb_AllModules;
     // Parâmetros gerais
     localparam WORD_SIZE = 8;  // Tamanho do registrador
 
-    // Sinais para o módulo BitInvert
+    // Sinais para os módulos SetBit e ClearBit
     reg [WORD_SIZE-1:0] reg_in;
     reg [3:0] pos;
-    wire [WORD_SIZE-1:0] reg_out_invert;
+    wire [WORD_SIZE-1:0] reg_out_set;
+    wire [WORD_SIZE-1:0] reg_out_clear;
 
     // Sinais para o módulo BitShiftRotate
     reg shift_enable;
@@ -21,14 +22,21 @@ module tb_AllModules;
     reg zero_flag_in, carry_flag_in, overflow_flag_in;
     wire zero_flag, carry_flag, overflow_flag;
 
-    // Instâncias dos módulos
-    BitInvert uut1 (
+    // Instâncias dos módulos SetBit e ClearBit
+    SetBit uut1 (
         .reg_in(reg_in),
         .pos(pos),
-        .reg_out(reg_out_invert)
+        .reg_out(reg_out_set)
     );
 
-    BitShiftRotate uut2 (
+    ClearBit uut2 (
+        .reg_in(reg_in),
+        .pos(pos),
+        .reg_out(reg_out_clear)
+    );
+
+    // Instância do módulo BitShiftRotate
+    BitShiftRotate uut3 (
         .reg_in(reg_in),
         .shift_enable(shift_enable),
         .shift_dir(shift_dir),
@@ -38,7 +46,8 @@ module tb_AllModules;
         .carry_flag(carry_flag_shift)
     );
 
-    FlagControl uut3 (
+    // Instância do módulo FlagControl
+    FlagControl uut4 (
         .clk(clk),
         .reset(reset),
         .zero_flag_in(zero_flag_in),
@@ -54,22 +63,30 @@ module tb_AllModules;
     always #5 clk = ~clk;
 
     initial begin
-        // --- Teste do módulo BitInvert ---
-      $display("======= Teste do módulo BitInvert =======");
+        // --- Teste dos módulos SetBit e ClearBit ---
+        $display("======= Teste dos módulos SetBit e ClearBit =======");
+
+        // Teste do SetBit
+        reg_in = 8'b10100010; pos = 3;
+        #10;
+        $display("SetBit na posição %d: %b -> %b", pos, reg_in, reg_out_set);
+
+      	
+        reg_in = 8'b00111011; pos = 7;
+        #10;
+        $display("SetBit na posição %d: %b -> %b", pos, reg_in, reg_out_set);
+
+        // Teste do ClearBit
         reg_in = 8'b10101010; pos = 3;
         #10;
-        $display("Inversão na posição %d: %b -> %b", pos, reg_in, reg_out_invert);
+        $display("ClearBit na posição %d: %b -> %b", pos, reg_in, reg_out_clear);
 
-        pos = 7;
+        reg_in = 8'b1111111; pos = 7;
         #10;
-        $display("Inversão na posição %d: %b -> %b", pos, reg_in, reg_out_invert);
-
-        pos = 0;
-        #10;
-        $display("Inversão na posição %d: %b -> %b", pos, reg_in, reg_out_invert);
+        $display("ClearBit na posição %d: %b -> %b", pos, reg_in, reg_out_clear);
 
         // --- Teste do módulo BitShiftRotate ---
-      $display("======= Teste do módulo BitShiftRotate =======");
+        $display("======= Teste do módulo BitShiftRotate =======");
         reg_in = 8'b11001100; shift_enable = 1; rotate_enable = 0;
 
         // Deslocamento à esquerda
@@ -92,6 +109,7 @@ module tb_AllModules;
         #10;
         $display("Rotação à direita: %b -> %b, Carry: %b", reg_in, reg_out_shift, carry_flag_shift);
 
+        // --- Teste do módulo FlagControl ---
         $display("======= Teste do módulo FlagControl =======");
 
         // Teste de reset
