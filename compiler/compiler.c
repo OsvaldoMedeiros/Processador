@@ -80,26 +80,27 @@ int main(){
     if(bin == NULL) printf("Error while creating the binary file.");
     else{
         printf("File successfully opened.\n");
-        while(fscanf(asm, "%8s", data)==1){
+        int first_line = 1; 
+        while(fscanf(asm, "%9s", data)==1){
             remove_comments(data); // remove os comentários
-            if(strlen(data)>0){ // se após a remoção de comentários, a linha não estiver vazia
-                char *opcode = opcode_translator(data);
-                if(opcode != NULL){ // se 
-                    fputs(opcode, bin);
-                    fputc('\n', bin);
-                }else{
-                    if(strspn(data, "01")== strlen(data) && strlen(data) == 8){ // verifica se a linha contém apenas 0s e 1s e se formam um número de 8 bits
-                        fputs(data, bin);
-                        fputc('\n', bin);
-                    }
+            if(strlen(data)==0) continue;
+            char *opcode = opcode_translator(data);
+            if(opcode != NULL){ // se o opcode existir na tabela, substitui e copia para o .bin
+                if(!first_line) fputc('\n', bin);
+                fputs(opcode, bin);
+                first_line = 0;
+            }else if(strspn(data, "01")== strlen(data) && strlen(data) == 8){ // verifica se a linha contém apenas 0s e 1s e se formam um número de 8 bits
+                if(!first_line) fputc('\n', bin);
+                fputs(data, bin);
+                first_line = 0;
                 }
-            }
+            
         }
     }
 
     fclose(asm);
     fclose(bin);
-    printf("Assymble file compiled to binary successfuly. \n");
+    printf("Assembly file compiled to binary successfuly. \n");
 
     return 0;
 }
