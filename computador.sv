@@ -1,4 +1,5 @@
 //MEMORIA.V
+`timescale 1ns/1ps
 
 
 //PROGRAM MEMORY 
@@ -661,11 +662,11 @@ module alu(
                 NZVC = mod_NZVC;
             end
             5'b00101: begin // Incremento
-                result = inc_result;
+                ALU_Out = inc_result;
                 NZVC = inc_NZVC;
             end
             5'b01000: begin // Decremento
-                result = dec_result;
+                ALU_Out = dec_result;
                 NZVC = dec_NZVC;
             end
             5'b01001: begin // AND
@@ -845,8 +846,10 @@ module data_path (
 			if (!reset)
 				IR <= 8'h00;
 			
-			if (IR_Load)
+			if (IR_Load == 1) begin
 				IR = Bus2;
+      end
+      $display("IR: %b", IR);
 	end
   //pag 23(do MAR dessa vez)
   	always @ (posedge clock or negedge reset)
