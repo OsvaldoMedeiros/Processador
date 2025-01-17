@@ -86,7 +86,7 @@ int main(){
         printf("Assembly file not found.");
         return 1;
     }
-    FILE *bin = fopen("code_source.bin", "wb");
+    FILE *bin = fopen("../code_source.bin", "wb");
     if(bin == NULL) {
         printf("Error while creating the binary file.");
         fclose(asm);
