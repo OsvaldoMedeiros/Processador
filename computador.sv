@@ -7,8 +7,6 @@ module programmemory (
     input wire [7:0] address,  // Endereço da ROM
     input wire clock,          // Clock
     output reg [7:0] data_out // Dados de saída
-    //input wire [7:0] data_in,  // Dados de entrada para escrita
-    //input wire write_enable    // Sinal para permitir escrita na memória
 );
     reg [7:0] prmemo [0:127]; // Vetor de memória para armazenar múltiplos bytes 
     integer file, status;
@@ -61,7 +59,7 @@ module rw_48x8_sync ( // essa é a data memory, é uma memória normal. Aparente
     input wire [7:0] data_in,  // Dados de entrada para escrita
     output reg [7:0] data_out  // Dados de saída para leitura
 );
-  reg[7:0] RW[128:175];  // Memória RAM de 96 endereços, 8 bits cada(é uma continuação do passado, por isso começa do 128)
+  reg[7:0] RW[128:175];  // Memória RAM de 48 endereços, 8 bits cada(é uma continuação do passado, por isso começa do 128)
   integer EN;
 
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
@@ -83,14 +81,14 @@ endmodule
 
 
 //PILHA
-module pilha ( // essa é a data memory, é uma memória normal. Aparentemente, serve mais para ajudar a fazer contas maiores e coisinhas desse tipo de suporte ao CPU 
-    input wire [7:0] address,  // Endereço da RAM
+module pilha ( 
+    input wire [7:0] address,  // Endereço 
     input wire clock,          // Clock
     input wire write,          // Sinal de escrita
     input wire [7:0] data_in,  // Dados de entrada para escrita
     output reg [7:0] data_out  // Dados de saída para leitura
 );
-  reg[7:0] pilha_mem[176:223];  // Memória RAM de 96 endereços, 8 bits cada(é uma continuação do passado, por isso começa do 176)
+  reg[7:0] pilha_mem[176:223];  // Memória RAM de 48 endereços, 8 bits cada(é uma continuação do passado, por isso começa do 176)
   integer EN;
   
   always @ (address) // verifica se o endereço fornecido está dentro dos limites da data memory
@@ -152,9 +150,6 @@ module memory (
         .data_out(pilha_data_out)
     );
     
-
-  //vou ficar faltando com uma informação precisa de como essa parte funciona, dps verifiquem na pag 20 do arquivo ou 162 do livro a explicação. Aparentemente, isso é para pegar a informação do data_in e jogar para a porta de saída selecionada pelo endereço.O !reset é para verificar se porta pode ta funcionando e o write se tá podendo receber as informações do data_in. O <= significa atribuição não bloqueada, pelo oq eu entendi siginifica q todas as portas vão receber o valor ao mesmo tempo, n sendo uma atribuição imediata como no "=", para ser algo mais semelhante com os flip flops na vida real na qual só é atualizado quando passa o ciclo do clock
-  // Bloco combinando toda a lógica de endereçamento
 // Bloco para gerenciamento das portas de saída
     integer i;
     always @(posedge clock or negedge reset) begin
@@ -175,7 +170,7 @@ module memory (
         else if (127<address && address <= 8'd175) 
             data_out = ram_data_out; // RAM
         else if (175< address && address <= 8'd223) 
-            data_out = pilha_data_out; // RAM
+            data_out = pilha_data_out; // Pilha
 
         else if (address >= 8'hF0 && address <= 8'hFF) 
             data_out = port_in_data[address - 8'hF0]; // Portas de entrada
@@ -812,7 +807,7 @@ module data_path (
     input wire reset,
     input wire [2:0] Bus1_Sel,
     input wire [1:0] Bus2_Sel,
-    input wire [3:0] ALU_Sel,
+    input wire [4:0] ALU_Sel,
     input wire IR_Load,
     input wire MAR_Load,
     input wire PC_Load,
@@ -1001,7 +996,7 @@ module control_unit (
   	output reg C_Load,
     output reg TEMP_Load,
     output reg CCR_Load,
-    output reg [3:0] ALU_Sel,
+    output reg [4:0] ALU_Sel,
     output reg [2:0] Bus1_Sel,
     output reg [1:0] Bus2_Sel,
     output reg Ads_Sel,
@@ -3477,7 +3472,7 @@ module cpu (
 
     // Sinais internos para conexão entre control_unit e data_path
     wire IR_Load, MAR_Load, PC_Load, PC_Inc, A_Load, B_Load, C_Load, TEMP_Load, CCR_Load, T_Dec, T_Inc;
-    wire [3:0] ALU_Sel;
+    wire [4:0] ALU_Sel;
     wire [2:0] Bus1_Sel;
   	wire [1:0]Bus2_Sel;
   	wire Ads_Sel;
@@ -3550,8 +3545,6 @@ module computer (
     wire [7:0] mem_data_out;   // Dados lidos da memória
     wire [7:0] cpu_data_out;   // Dados enviados pela CPU
     wire write_enable;     // Escrevendo dados? (para simplificar, fixo em 0)
-    //wire [7:0] port_in_data [15:0];
-    //wire [7:0] port_out_data [15:0];
 
 
     // Instanciação da CPU
@@ -3575,8 +3568,5 @@ module computer (
         .port_in_data(port_in_data),
         .port_out_data(port_out_data)
     );
-
-    // Saída final do sistema to ficando doido
-    //assign data_out = mem_data_out;
 
 endmodule
