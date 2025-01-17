@@ -1,3 +1,7 @@
-ADD # A plus B
-00011011 ; A
-00100110 ; B
+NOT_A; inversão de bits
+00001010
+ADD # soma
+00010000 ; A
+00100110
+ADF
+STTR
