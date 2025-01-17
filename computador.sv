@@ -184,52 +184,94 @@ endmodule
 
 //CPU.V
 //----------------------- módulos(operações lógicas/aritmeticas/relacionais/manipulação bits) LEGALIZADA -----------------------
-// AND Gate
+//AND
 module and_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = A & B; // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == 1 && B[i] == 1)
+                Y[i] = 1;
+            else
+                Y[i] = 0;
+        end
     end
 endmodule
 
-// OR Gate
+//OR
 module or_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = A | B; // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == 1 || B[i] == 1)
+                Y[i] = 1;
+            else
+                Y[i] = 0;
+        end
     end
 endmodule
 
-// XOR Gate
+//XOR
 module xor_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = A ^ B; // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] != B[i])
+                Y[i] = 1;
+            else
+                Y[i] = 0;
+        end
     end
 endmodule
 
-// NAND Gate
+//NAND
 module nand_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = ~(A & B); // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == 1 && B[i] == 1)
+                Y[i] = 0;
+            else
+                Y[i] = 1;
+        end
     end
 endmodule
 
-// NOR Gate
+//NOR
 module nor_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = ~(A | B); // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == 0 && B[i] == 0)
+                Y[i] = 1;
+            else
+                Y[i] = 0;
+        end
     end
 endmodule
 
-// XNOR Gate
+//XNOR
 module xnor_gate (output reg [7:0] Y, input [7:0] A, B);
+    integer i;
     always @(*) begin
-        Y = ~(A ^ B); // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == B[i])
+                Y[i] = 1;
+            else
+                Y[i] = 0;
+        end
     end
 endmodule
 
-// NOT Gate
+//NOT
 module not_gate (output reg [7:0] Y, input [7:0] A);
+    integer i;
     always @(*) begin
-        Y = ~A; // Operação vetorial
+        for (i = 0; i < 8; i = i + 1) begin
+            if (A[i] == 1)
+                Y[i] = 0;
+            else
+                Y[i] = 1;
+        end
     end
 endmodule
 
