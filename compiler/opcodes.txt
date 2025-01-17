@@ -1,0 +1,47 @@
+OPCODES 8 BITS
+MNEMONICO OPCODE(BINÁRIO) OPCODE(HEX)
+
+ADD 0000 0010   0x02
+SUB 0000 0011
+MUL 0000 0100
+DIV 0000 0101
+MOD 0000 0110
+INC 0000 0111
+DEC 0000 1000
+
+NOT 0000 1001
+AND 0000 1010
+NAND 0000 1011
+OR 0000 1100
+NOR 0000 1101
+XOR 0000 1110
+XNOR 0000 1111
+SHL 0001 0000                                           # deslocamento de bit a esquerda
+SHR 0001 0001                                           # deslocamento de bit a direita
+CP 0001 0010                                            # comparação
+
+IN 0001 0011
+OUT 0001 0100
+HLT 0001 0101                                           # estado de espera ou inatividade
+NOP 0001 0110                                           # não faz nada
+INT 0001 0111                                           # chamada de interrupção
+
+LDA_IMM 0001 1000
+LDA_DIR 0001 1001
+LDB_IMM 0001 1010
+LDB_DIR 0001 1011
+LDC_IMM 0001 1100
+LDC_DIR 0001 1101
+STA_DIR 0001 1110
+STB_DIR 0001 1111
+STC_DIR 0010 0000
+PUSH 0010 0001
+POP 0010 0010
+
+CALL 0010 0011                                # chama subrotina
+RET 0010 0100                                 # retorna subrotina
+BRA 0010 0101
+BEQ 0010 0110                                 # salta se o valor no registrador for zero 
+BNQ 0010 0111                                 # salta se o valor no registrador não for zero.
+BLT 0010 1000                                 # salta se o valor for menor que o outro
+BGT 0010 1001                                 # salta se o valor for maior que o outro
