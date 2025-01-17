@@ -448,7 +448,7 @@ module multiplier(
     // Flags:
     // Para 16 bits, consideramos:
     // N = bit 15
-    // Z = 1 se produto for todo zero
+    // Z = 1 se produto for tdo zero
     // V = 1 se algum bit além do 7 estiver setado (extrapolou 8 bits) - suposição
     // C = não se aplica para multiplicação pura
     assign NZVC[3] = P[15];
@@ -610,7 +610,7 @@ module alu(
     // Instanciando o módulo de deslocamento e rotação
     BitShiftRotate u_shift_rotate(
         .reg_in(A),
-        .shift_enable((ALU_Sel == 3'b110 || ALU_Sel == 3'b111)), // Shift enable
+        .shift_enable((ALU_Sel == 5'b00110 || ALU_Sel == 5'b00111)), // Shift enable
         .shift_dir(ALU_Sel[0]),  // Direção do shift: 0 para esquerda, 1 para direita
         .rotate_enable(1'b0),   // Rotação desabilitada
         .rotate_dir(1'b0),      // Não se aplica
@@ -618,54 +618,138 @@ module alu(
         .carry_flag(carry_flag)
     );
 
+    wire [7:0] add_sub_result, mul_result, div_quotient, mod_remainder;
+    wire [7:0] inc_result, dec_result;
+    wire add_sub_cout, inc_cout, dec_cout, comparator_eq_result, comparator_gt_result, comparator_lt_result;
+    wire [15:0] mul_product;
+    wire [3:0] add_sub_NZVC, mul_NZVC, div_NZVC, mod_NZVC, inc_NZVC, dec_NZVC;
+
+    adder_subtractor add_sub (.Sum(add_sub_result), .Cout(add_sub_cout), .NZVC(add_sub_NZVC), .A(A), .B(B), .SUB(ALU_Sel[0]));
+    multiplier mul (.A(A), .B(B), .P(mul_product), .NZVC(mul_NZVC));
+    div div_inst (.clk(clk), .dividend(A), .divisor(B), .quotient(div_quotient), .NZVC(div_NZVC));
+    mod mod_inst (.clk(clk), .dividend(A), .divisor(B), .remainder(mod_remainder), .NZVC(mod_NZVC));
+    inc inc_inst (.A(A), .Result(inc_result), .Cout(inc_cout), .NZVC(inc_NZVC));
+    dec dec_inst (.A(A), .Result(dec_result), .Cout(dec_cout), .NZVC(dec_NZVC));
+    comparator_eq comp_eq (.AeqB(comparator_eq_result), .A(A), .B(B));
+    comparator_gt comp_gt (.AmaB(comparator_gt_result), .A(A), .B(B));
+    comparator_lt comp_lt (.AmeB(comparator_lt_result), .A(A), .B(B));
+
     always @(*) begin
         // Inicializa flags
         NZVC = 4'b0000;
 
         // Operações baseadas no seletor
         case (ALU_Sel)
-            5'b000: begin // Soma
-                {NZVC[0], ALU_Out} = A + B; // Carry
-                NZVC[3] = ALU_Out[7];       // Negativo
-                NZVC[2] = (ALU_Out == 8'b0); // Zero
-                NZVC[1] = (~A[7] & ~B[7] & ALU_Out[7]) | (A[7] & B[7] & ~ALU_Out[7]); // Overflow
+            5'b00000: begin // Adição
+                ALU_Out = add_sub_result;
+                NZVC = add_sub_NZVC;
             end
-            5'b001: begin // Subtração
-                {NZVC[0], ALU_Out} = A - B; // Borrow
-                NZVC[3] = ALU_Out[7];       // Negativo
-                NZVC[2] = (ALU_Out == 8'b0); // Zero
-                NZVC[1] = (A[7] & ~B[7] & ~ALU_Out[7]) | (~A[7] & B[7] & ALU_Out[7]); // Overflow
+            5'b00001: begin // Subtração
+                ALU_Out = add_sub_result;
+                NZVC = add_sub_NZVC;
             end
-            5'b010: begin // AND
+            5'b00010: begin // Multiplicação
+                ALU_Out = mul_product[15:0]; // Considera os 8 bits menos significativos
+                NZVC = mul_NZVC;
+            end
+            5'b00011: begin // Divisão
+                ALU_Out = div_quotient;
+                NZVC = div_NZVC;
+            end
+            5'b00100: begin // mod
+                ALU_Out = mod_remainder;
+                NZVC = mod_NZVC;
+            end
+            5'b00101: begin // Incremento
+                result = inc_result;
+                NZVC = inc_NZVC;
+            end
+            5'b01000: begin // Decremento
+                result = dec_result;
+                NZVC = dec_NZVC;
+            end
+            5'b01001: begin // AND
                 ALU_Out = and_result;       
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
             end
-            5'b011: begin // OR
+            5'b01010: begin // OR
                 ALU_Out = or_result;        
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
             end
-            5'b100: begin // XOR
+            5'b01011: begin // XOR
                 ALU_Out = xor_result;       // Usando saída do módulo `xor_gate`
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
             end
-            5'b101: begin // NOT
+            5'b01100: begin // NOT
                 ALU_Out = not_result;       // Usando saída do módulo `not_gate`
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
             end
-            5'b110: begin // Shift lógico para a esquerda
+            5'b01101: begin // NOR
+                ALU_Out = nor_result;       // 
+                NZVC[3] = ALU_Out[7];       // Negativo
+                NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
+            end
+            5'b01110: begin // NAND
+                ALU_Out = nand_result;       // 
+                NZVC[3] = ALU_Out[7];       // Negativo
+                NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
+            end
+             5'b01111: begin // XNOR
+                ALU_Out = xnor_result;       //
+                NZVC[3] = ALU_Out[7];       // Negativo
+                NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
+            end
+             5'b10000: begin // comp_eq
+                ALU_Out = comparator_eq_result;       
+                NZVC[3] = 0;       // Negativo
+                NZVC[2] = (ALU_Out == 1'b1); // Zero
+                NZVC[1] = 0;
+                NZVC[0] = 0;
+            end
+            5'b10001: begin // comp_gt
+                ALU_Out = comparator_gt_result;       
+                NZVC[3] = 0;       // Negativo
+                NZVC[2] = 0;
+                NZVC[1] = 0;
+                NZVC[0] = 0; 
+            end
+            5'b10010: begin // comp_lt
+                ALU_Out = comparator_lt_result;       
+                NZVC[3] = 0;       // Negativo
+                NZVC[2] = 0;
+                NZVC[1] = 0;
+                NZVC[0] = 0; 
+            end
+            5'b00110: begin // Shift lógico para a esquerda
                 ALU_Out = shift_rotate_out; 
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
                 NZVC[0] = carry_flag;       // Carry
             end
-            5'b111: begin // Shift lógico para a direita
+            5'b00111: begin // Shift lógico para a direita
                 ALU_Out = shift_rotate_out; 
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
+                NZVC[1] = 0;
                 NZVC[0] = carry_flag;       // Carry
             end
             default: ALU_Out = 8'b00000000;
@@ -2130,7 +2214,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b00101; //not
+                    ALU_Sel = 5'b01100; //not
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2148,7 +2232,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b00101; //not
+                    ALU_Sel = 5'b01100; //not
                     CCR_Load = 1;
                     Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2167,7 +2251,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b00110; // and
+                    ALU_Sel = 5'b01001; // and
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2186,7 +2270,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b00111; // nand
+                    ALU_Sel = 5'b01110; // nand
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2205,7 +2289,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01000; // or
+                    ALU_Sel = 5'b01010; // or
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2224,7 +2308,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01001; // nor
+                    ALU_Sel = 5'b01101; // nor
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2243,7 +2327,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01010; // xor
+                    ALU_Sel = 5'b01011; // xor
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2262,7 +2346,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01011; // xnor
+                    ALU_Sel = 5'b01111; // xnor
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2281,7 +2365,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01100; // 
+                    ALU_Sel = 5'b10000; // 
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2300,7 +2384,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01101; // 
+                    ALU_Sel = 5'b10001; // 
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2319,7 +2403,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01110; //
+                    ALU_Sel = 5'b10010; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2337,7 +2421,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01111; //
+                    ALU_Sel = 5'b00110; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2355,7 +2439,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b01111; //
+                    ALU_Sel = 5'b00110; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2373,7 +2457,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10000; //
+                    ALU_Sel = 5'b00111; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2391,7 +2475,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10000; //
+                    ALU_Sel = 5'b00111; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2409,7 +2493,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10001; //
+                    ALU_Sel = 5'b00101; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2427,7 +2511,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10001; //
+                    ALU_Sel = 5'b00101; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2445,7 +2529,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10010; //
+                    ALU_Sel = 5'b01000; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
@@ -2463,7 +2547,7 @@ module control_unit (
                     B_Load = 0;
                   	C_Load = 1;
                     TEMP_Load = 0;
-                    ALU_Sel = 5'b10010; //
+                    ALU_Sel = 5'b01000; //
                     CCR_Load = 1;
                     Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
