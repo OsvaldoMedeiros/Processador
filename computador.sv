@@ -17,7 +17,7 @@ module programmemory (
 
     // Inicialização da memória de programa a partir de um arquivo
     initial begin
-        file = $fopen("input.hex", "rb");
+        file = $fopen("input.bin", "rb");
         if (file == 0) begin
             $display("Erro: Não foi possível abrir o arquivo.");
             $finish;
@@ -28,7 +28,7 @@ module programmemory (
         while (!$feof(file)) begin
             status = $fscanf(file, "%b\n", prmemo[i]);  // Lê 1 byte de cada vez
             if (status != 0) begin
-               // $display("Linha lida: %h", prmemo[i]);
+               // $display("Linha lida: %b", prmemo[i]);
             end
             i = i + 1;
         end
@@ -47,8 +47,7 @@ module programmemory (
     always @(posedge clock) begin
         if (EN)
             data_out = prmemo[address];
-       // if (write_enable && EN)
-         //   prmemo[address] = data_in;  // Se habilitado para escrita, escreve os dados na memória
+       
     end
 
 endmodule
@@ -183,204 +182,7 @@ endmodule
 //***************************************************************
 
 //CPU.V
-
-// Portas lógicas
-module and_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == 1 && B[i] == 1)
-                Y[i] = 1;
-            else
-                Y[i] = 0;
-        end
-    end
-endmodule
-
-//OR
-module or_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == 1 || B[i] == 1)
-                Y[i] = 1;
-            else
-                Y[i] = 0;
-        end
-    end
-endmodule
-
-//XOR
-module xor_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] != B[i])
-                Y[i] = 1;
-            else
-                Y[i] = 0;
-        end
-    end
-endmodule
-
-//NAND
-module nand_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == 1 && B[i] == 1)
-                Y[i] = 0;
-            else
-                Y[i] = 1;
-        end
-    end
-endmodule
-
-//NOR
-module nor_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == 0 && B[i] == 0)
-                Y[i] = 1;
-            else
-                Y[i] = 0;
-        end
-    end
-endmodule
-
-//XNOR
-module xnor_gate (output reg [7:0] Y, input [7:0] A, B);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == B[i])
-                Y[i] = 1;
-            else
-                Y[i] = 0;
-        end
-    end
-endmodule
-
-//NOT
-module not_gate (output reg [7:0] Y, input [7:0] A);
-    integer i;
-    always @(*) begin
-        for (i = 0; i < 8; i = i + 1) begin
-            if (A[i] == 1)
-                Y[i] = 0;
-            else
-                Y[i] = 1;
-        end
-    end
-endmodule
-
-//-------- Deslocamento e rotação de bits----------
-module BitShiftRotate (
-  input [7:0] reg_in, // registrador de entrada
-  input shift_enable, // habilita o deslocamento
-  input shift_dir, // 110 esquerda 111 direita
-  input rotate_enable, // habilita a rotação
-  input rotate_dir, // 0 esquerda 1 direita
-  output reg [7:0] reg_out, // registrador de entrada
-  output reg carry_flag // flag de carry (bit perdido)
-);
-  
-  always @(*) begin
-    if (shift_enable) begin
-      if (shift_dir == 3'b110) begin
-        reg_out = reg_in << 1; 
-        carry_flag = reg_in[`WORD_SIZE-1]; // bit mais significativo
-      end else if (shift_dir == 3'b111) begin
-        reg_out = reg_in >> 1;
-        carry_flag = reg_in[0]; // bit menos significativo
-      end
-      
-    end else if (rotate_enable) begin
-      if (rotate_dir == 0) begin
-        reg_out = {reg_in[`WORD_SIZE-2:0], reg_in[`WORD_SIZE-1]}; // {..., ...} concatena as duas partes
-        carry_flag = reg_in[`WORD_SIZE-1]; // bit mais significativo vai para carry
-      end else begin
-        reg_out = {reg_in[0], reg_in[`WORD_SIZE-1:1]};
-        carry_flag = reg_in[0]; // bit menos significativo vai para carry
-      end
-      
-    end else begin
-      reg_out = reg_in;
-      carry_flag = 0;      
-    end
-  end
-endmodule
-
-//ALU    
-module alu( // n alterei nada na ula enviada pelo gpt
-    input wire [7:0] A,         // Operando A
-    input wire [7:0] B,         // Operando B
-    input wire [3:0] ALU_Sel,   // Selector da operação
-    output reg [7:0] ALU_Out,   // Resultado da ALU
-    output reg [3:0] NZVC          // Vetor de Flags
-);
-
-    wire [7:0] and_result, or_result, xor_result, nand_result, nor_result, xnor_result, not_result;
-    // instanciando as portas lógicas
-    and_gate and_inst(.Y(and_result), .A(A[7:0]), .B(B[7:0]));
-    or_gate or_inst(.Y(or_result), .A(A[7:0]), .B(B[7:0]));
-    xor_gate xor_inst(.Y(xor_result), .A(A[7:0]), .B(B[7:0]));
-    nand_gate nand_inst(.Y(nand_result), .A(A[7:0]), .B(B[7:0]));
-    nor_gate nor_inst(.Y(nor_result), .A(A[7:0]), .B(B[7:0]));
-    xnor_gate xnor_inst(.Y(xnor_result), .A(A[7:0]), .B(B[7:0]));
-    not_gate not_inst(.Y(not_result), .A(A[7:0]));
-
-    always @(*) begin
-        // Operações baseadas no seletor
-        case (ALU_Sel)
-            3'b000: ALU_Out = A + B;          // Soma
-            3'b001: ALU_Out = A - B;          // Subtração
-            3'b010: ALU_Out = A & B;          // AND
-            3'b011: ALU_Out = A | B;          // OR
-            3'b100: ALU_Out = A ^ B;          // XOR
-            3'b101: ALU_Out = ~A;             // NOT (Somente A)
-            3'b110: ALU_Out = A << 1;         // Shift lógico para a esquerda
-            3'b111: ALU_Out = A >> 1;         // Shift lógico para a direita
-            default: ALU_Out = 8'b00000000;   // Valor padrão
-        endcase
-
-        /*// Atualização das flags
-        Zero     = (ALU_Out == 8'b0);         // Flag Zero
-        Negative = ALU_Out[7];                // Flag Negativo (MSB = 1)
-        Carry    = (A + B > 8'b11111111);     // Carry gerado na soma
-        Overflow = ((A[7] & B[7] & ~ALU_Out[7]) | (~A[7] & ~B[7] & ALU_Out[7])); // Overflow*/
-    end
-endmodule
-   
-// ----------SetRegist--------
-module SetBit (
-  input [`WORD_SIZE-1:0] reg_in,
-  input [3:0] pos,
-  output [`WORD_SIZE-1:0] reg_out
-);
-
-  wire [`WORD_SIZE-1:0] mask;
-  assign mask = (1 << pos); // Gera máscara com 1 na posição desejada
-  assign reg_out = reg_in | mask; // Usa OR para setar o bit em 1
-
-endmodule
-
-
-//---------- ClearBit---------
-module ClearBit (
-  input [`WORD_SIZE-1:0] reg_in,
-  input [3:0] pos,
-  output [`WORD_SIZE-1:0] reg_out
-);
-  
-  wire [`WORD_SIZE-1:0] mask;
-  assign mask = ~(1 << pos);
-  assign reg_out = reg_in & mask;
-  
-endmodule
-
-//-------------------- ALU + módulos(operações lógicas/manioulação bits) LEGALIZADA -----------------------
+//----------------------- módulos(operações lógicas/aritmeticas/relacionais/manipulação bits) LEGALIZADA -----------------------
 // AND Gate
 module and_gate (output reg [7:0] Y, input [7:0] A, B);
     always @(*) begin
@@ -430,6 +232,32 @@ module not_gate (output reg [7:0] Y, input [7:0] A);
     end
 endmodule
 
+module SetBit (
+  input [7:0] reg_in,
+  input [3:0] pos,
+  output [7:0] reg_out
+);
+
+  wire [7:0] mask;
+  assign mask = (1 << pos); // Gera máscara com 1 na posição desejada
+  assign reg_out = reg_in | mask; // Usa OR para setar o bit em 1
+
+endmodule
+
+
+//---------- ClearBit---------
+module ClearBit (
+  input [7:0] reg_in,
+  input [3:0] pos,
+  output [7:0] reg_out
+);
+  
+  wire [7:0] mask;
+  assign mask = ~(1 << pos);
+  assign reg_out = reg_in & mask;
+  
+endmodule
+
 // Bit Shift and Rotate
 module BitShiftRotate (
     input [7:0] reg_in, 
@@ -464,10 +292,302 @@ module BitShiftRotate (
     end
 endmodule
 
+// Módulo para verificar A == B
+module comparator_eq (
+    output reg AeqB,      // Saída: 1 se A == B, caso contrário 0
+    input [7:0] A, B      // Entradas de 8 bits
+);
+    wire [7:0] xnor_result; // Resultado da operação XNOR entre A e B
+
+    // Instanciar portas XNOR para comparação bit a bit
+    xnor_gate u_xnor(.Y(xnor_result), .A(A), .B(B));
+
+    always @(*) begin
+        // AeqB é 1 se tds os bits de A e B forem iguais
+        AeqB = &xnor_result; // AND reduzido dos resultados XNOR
+    end
+endmodule
+
+// Módulo para verificar A > B
+module comparator_gt (
+    output reg AmaB,      // Saída: 1 se A > B, caso contrário 0
+    input [7:0] A, B      // Entradas de 8 bits
+);
+    wire [7:0] greater_bit; // Resultado para verificar A[i] > B[i]
+    reg stop_loop;          // Variável de controle para interromper o loop
+
+    // Instanciar portas AND para verificar A > B em cada bit
+    and_gate greater_check(.Y(greater_bit), .A(A), .B(~B));
+
+    always @(*) begin
+        AmaB = 0; // Inicializa como 0
+        stop_loop = 0; // Reinicia a variável de controle
+        for (integer i = 7; i >= 0 && !stop_loop; i = i - 1) begin
+            if (greater_bit[i]) begin
+                AmaB = 1; // A > B encontrado
+                stop_loop = 1; // Interrompe o loop
+            end else if (A[i] != B[i]) begin
+                // Se os bits não são iguais e A não é maior, não verifica mais
+                stop_loop = 1; // Interrompe o loop
+            end
+        end
+    end
+endmodule
+
+// Módulo para verificar A < B
+module comparator_lt (
+    output reg AmeB,      // Saída: 1 se A < B, caso contrário 0
+    input [7:0] A, B      // Entradas de 8 bits
+);
+    wire [7:0] less_bit; // Resultado para verificar A[i] < B[i]
+    reg stop_loop;       // Variável de controle para interromper o loop
+
+    // Instanciar portas AND para verificar A < B em cada bit
+    and_gate less_check(.Y(less_bit), .A(~A), .B(B));
+
+    always @(*) begin
+        AmeB = 0; // Inicializa como 0
+        stop_loop = 0; // Reinicia a variável de controle
+        for (integer i = 7; i >= 0 && !stop_loop; i = i - 1) begin
+            if (less_bit[i]) begin
+                AmeB = 1; // A < B encontrado
+                stop_loop = 1; // Interrompe o loop
+            end else if (A[i] != B[i]) begin
+                // Se os bits não são iguais e A não é menor, não verifica mais
+                stop_loop = 1; // Interrompe o loop
+            end
+        end
+    end
+endmodule
+
+module half_adder (output Sum, Cout, input A ,B);
+  xor (Sum, A, B);
+  and (Cout, A, B);
+endmodule
+
+module full_adder(output Sum, Carry, input Cin, A, B);
+  wire HA1_sum, HA1_cout, HA2_cout;
+
+  half_adder M1(.Cout(HA1_cout), .Sum(HA1_sum), .A(A), .B(B));
+  half_adder M2(.Sum(Sum), .Cout(HA2_cout), .A(Cin), .B(HA1_sum));
+
+  or M3 (Carry, HA1_cout, HA2_cout);
+endmodule
+
+//---------------------------------------------------------------
+// Somador/Subtrator de 8 bits
+//---------------------------------------------------------------
+module adder_subtractor(
+    output wire [7:0] Sum,
+    output wire Cout,
+    output wire [3:0] NZVC,   // [N, Z, V, C]
+    input wire [7:0] A, B,
+    input wire SUB // 0 = Adição, 1 = Subtração
+);
+    wire [7:0] B_xor;
+    wire C1, C2, C3, C4, C5, C6, C7;
+
+    // Calcula o complemento de dois de B caso SUB esteja ativo
+    assign B_xor = B ^ {8{SUB}};
+
+    // Cadeia de somadores completos
+    full_adder U1 (.Sum(Sum[0]), .Carry(C1), .A(A[0]), .B(B_xor[0]), .Cin(SUB));
+    full_adder U2 (.Sum(Sum[1]), .Carry(C2), .A(A[1]), .B(B_xor[1]), .Cin(C1));
+    full_adder U3 (.Sum(Sum[2]), .Carry(C3), .A(A[2]), .B(B_xor[2]), .Cin(C2));
+    full_adder U4 (.Sum(Sum[3]), .Carry(C4), .A(A[3]), .B(B_xor[3]), .Cin(C3));
+    full_adder U5 (.Sum(Sum[4]), .Carry(C5), .A(A[4]), .B(B_xor[4]), .Cin(C4));
+    full_adder U6 (.Sum(Sum[5]), .Carry(C6), .A(A[5]), .B(B_xor[5]), .Cin(C5));
+    full_adder U7 (.Sum(Sum[6]), .Carry(C7), .A(A[6]), .B(B_xor[6]), .Cin(C6));
+    full_adder U8 (.Sum(Sum[7]), .Carry(Cout), .A(A[7]), .B(B_xor[7]), .Cin(C7));
+
+    // Flags:
+    // N = bit mais significativo do resultado
+    // Z = 1 se resultado for zero
+    // V = overflow (carry do penúltimo bit XOR carry final)
+    // C = carry out final
+    assign NZVC[3] = Sum[7];
+    assign NZVC[2] = (Sum == 8'b0);
+    assign NZVC[1] = C7 ^ Cout; 
+    assign NZVC[0] = Cout;
+endmodule
+
+//---------------------------------------------------------------
+// Multiplicador de 8 bits
+//---------------------------------------------------------------
+module multiplier(
+    input wire [7:0] A,  // Multiplicando
+    input wire [7:0] B,  // Multiplicador
+    output wire [15:0] P, // Produto
+    output wire [3:0] NZVC // [N, Z, V, C]
+);
+    wire [7:0] pp0, pp1, pp2, pp3, pp4, pp5, pp6, pp7; // Partial products
+    wire [15:0] sum1, sum2, sum3, sum4, sum5, sum6, sum7;
+
+    // Calcula os partial products diretamente
+    assign pp0 = A & {8{B[0]}};
+    assign pp1 = A & {8{B[1]}};
+    assign pp2 = A & {8{B[2]}};
+    assign pp3 = A & {8{B[3]}};
+    assign pp4 = A & {8{B[4]}};
+    assign pp5 = A & {8{B[5]}};
+    assign pp6 = A & {8{B[6]}};
+    assign pp7 = A & {8{B[7]}};
+
+    // Soma os partial products com deslocamento adequado
+    assign sum1 = {pp1, 1'b0} + {1'b0, pp0};
+    assign sum2 = {pp2, 2'b0} + sum1;
+    assign sum3 = {pp3, 3'b0} + sum2;
+    assign sum4 = {pp4, 4'b0} + sum3;
+    assign sum5 = {pp5, 5'b0} + sum4;
+    assign sum6 = {pp6, 6'b0} + sum5;
+    assign sum7 = {pp7, 7'b0} + sum6;
+
+    // Produto final
+    assign P = sum7;
+
+    // Flags:
+    // Para 16 bits, consideramos:
+    // N = bit 15
+    // Z = 1 se produto for todo zero
+    // V = 1 se algum bit além do 7 estiver setado (extrapolou 8 bits) - suposição
+    // C = não se aplica para multiplicação pura
+    assign NZVC[3] = P[15];
+    assign NZVC[2] = (P == 16'b0);
+    assign NZVC[1] = |P[15:8]; // Overflow se ultrapassar 8 bits
+    assign NZVC[0] = 1'b0;
+endmodule
+
+//---------------------------------------------------------------
+// Divisor de 8 bits
+//--------------------------------
+module divider(
+    input wire clk, // Clock para controle
+    input wire [7:0] dividend, 
+    input wire [7:0] divisor,
+    output reg [7:0] quotient, 
+    output reg [7:0] remainder,
+    output wire [3:0] NZVC  // [N, Z, V, C]
+);
+    reg [7:0] temp_dividend;
+    reg [7:0] temp_quotient;
+    integer i;
+
+    always @(posedge clk) begin
+      temp_dividend = dividend;
+      temp_quotient = 0;
+
+      if (divisor != 0) begin
+        for (i = 7; i >= 0; i = i - 1) begin
+          if (temp_dividend >= ({7'b0, divisor} << i)) begin
+            temp_dividend = temp_dividend - ({7'b0, divisor} << i);
+            temp_quotient = temp_quotient | (1 << i);
+          end
+        end
+
+        quotient = temp_quotient;
+        remainder = temp_dividend;
+      end else begin
+        quotient = 8'b0;
+        remainder = 8'b0;
+      end
+    end
+
+    // Flags:
+    // N = bit mais significativo do quociente (outra forma de interpretar)
+    // Z = 1 se quociente for zero
+    // V = 0 (não estamos detectando overflow de sinal aqui)
+    // C = 0 (não se aplica para divisão simples)
+    assign NZVC[3] = quotient[7];
+    assign NZVC[2] = (quotient == 8'b0);
+    assign NZVC[1] = 1'b0;
+    assign NZVC[0] = 1'b0;
+endmodule
+
+module div(
+    input wire clk,
+    input wire [7:0] dividend,
+    input wire [7:0] divisor,
+  output wire [7:0] quotient,
+  output wire [3:0] NZVC
+);
+  wire [7:0] remainder; // Ignorado neste módulo
+
+  divider u_divider (
+    .clk(clk),
+    .dividend(dividend),
+    .divisor(divisor),
+    .quotient(quotient),
+    .remainder(remainder),
+    .NZVC(NZVC)
+  );
+endmodule
+
+module mod(
+    input wire clk,
+    input wire [7:0] dividend,
+    input wire [7:0] divisor,
+  output wire [7:0] remainder,
+  output wire [3:0] NZVC
+);
+  wire [7:0] quotient;    // Ignorado neste módulo
+
+  divider u_divider (
+    .clk(clk),
+    .dividend(dividend),
+    .divisor(divisor),
+    .quotient(quotient),
+    .remainder(remainder),
+    .NZVC(NZVC)
+  );
+endmodule
+
+//---------------------------------------------------------------
+// Incrementador de 8 bits
+//---------------------------------------------------------------
+module inc(
+    input wire [7:0] A,        // Valor a ser incrementado
+    output wire [7:0] Result,  // Resultado do incremento
+    output wire Cout,          // Carry out
+    output wire [3:0] NZVC     // [N, Z, V, C]
+);
+    // Incrementa A adicionando 1 (SUB = 0 para adição)
+    adder_subtractor adder (
+        .Sum(Result),
+        .Cout(Cout),
+      .NZVC(NZVC),
+        .A(A),
+        .B(8'b00000001),
+        .SUB(1'b0)
+    );
+endmodule
+
+//---------------------------------------------------------------
+// Decrementador de 8 bits
+//---------------------------------------------------------------
+module dec(
+    input wire [7:0] A,        // Valor a ser decrementado
+    output wire [7:0] Result,  // Resultado do decremento
+    output wire Cout,          // Borrow out
+    output wire [3:0] NZVC     // [N, Z, V, C]
+);
+    // Decrementa A subtraindo 1 (SUB = 1)
+    adder_subtractor subtractor (
+        .Sum(Result),
+        .Cout(Cout),
+      .NZVC(NZVC),
+        .A(A),
+        .B(8'b00000001),
+        .SUB(1'b1)
+    );
+endmodule
+
+
+
+// -------------------------------------------- ULA -------------------------------------------------
 module alu( 
     input wire [7:0] A,         // Operando A
     input wire [7:0] B,         // Operando B
-    input wire [2:0] ALU_Sel,   // Selector da operação
+    input wire [4:0] ALU_Sel,   // Selector da operação
     output reg [7:0] ALU_Out,   // Resultado da ALU
     output reg [3:0] NZVC       // Vetor de flags (N, Z, V, C)
 );
@@ -504,45 +624,45 @@ module alu(
 
         // Operações baseadas no seletor
         case (ALU_Sel)
-            3'b000: begin // Soma
+            5'b000: begin // Soma
                 {NZVC[0], ALU_Out} = A + B; // Carry
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
                 NZVC[1] = (~A[7] & ~B[7] & ALU_Out[7]) | (A[7] & B[7] & ~ALU_Out[7]); // Overflow
             end
-            3'b001: begin // Subtração
+            5'b001: begin // Subtração
                 {NZVC[0], ALU_Out} = A - B; // Borrow
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
                 NZVC[1] = (A[7] & ~B[7] & ~ALU_Out[7]) | (~A[7] & B[7] & ALU_Out[7]); // Overflow
             end
-            3'b010: begin // AND
+            5'b010: begin // AND
                 ALU_Out = and_result;       
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
             end
-            3'b011: begin // OR
+            5'b011: begin // OR
                 ALU_Out = or_result;        
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
             end
-            3'b100: begin // XOR
+            5'b100: begin // XOR
                 ALU_Out = xor_result;       // Usando saída do módulo `xor_gate`
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
             end
-            3'b101: begin // NOT
+            5'b101: begin // NOT
                 ALU_Out = not_result;       // Usando saída do módulo `not_gate`
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
             end
-            3'b110: begin // Shift lógico para a esquerda
+            5'b110: begin // Shift lógico para a esquerda
                 ALU_Out = shift_rotate_out; 
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
                 NZVC[0] = carry_flag;       // Carry
             end
-            3'b111: begin // Shift lógico para a direita
+            5'b111: begin // Shift lógico para a direita
                 ALU_Out = shift_rotate_out; 
                 NZVC[3] = ALU_Out[7];       // Negativo
                 NZVC[2] = (ALU_Out == 8'b0); // Zero
@@ -584,8 +704,18 @@ module data_path (
 );
 
     // Registradores
-  	reg [7:0] IR, MAR, PC, A, B, C, TEMP, CCR, T;
+  	reg [7:0] IR, MAR, PC, A, B, TEMP, CCR, T;
+    reg [15:0] C;
     reg [7:0] Bus1, Bus2, ALU_Result, NZVC;
+
+    // Instância do módulo ALU
+    alu alu_instance (
+        .A(A),
+        .B(B),
+        .ALU_Sel(ALU_Sel),
+        .ALU_Out(ALU_Result),
+        .NZVC(NZVC)
+    );
   
   	
   //Multiplexadores(pag 23)
@@ -663,6 +793,7 @@ module data_path (
 			
 			if (A_Load == 1)
 				A = Bus2;
+      $display("reg A: %b", A);
 	end         
 	//registrador b
     always @ (posedge clock or negedge reset)
@@ -672,6 +803,7 @@ module data_path (
 			
 			if (B_Load == 1)
 				B = Bus2;
+      $display("reg B: %b", B);
 	end
   	//registrador c
     always @ (posedge clock or negedge reset)
@@ -709,22 +841,6 @@ module data_path (
 			 if (T_Inc == 1)
 				T = T + 1;
 	end
-  
-    
-
-// Instância do módulo ALU
-    alu alu_instance (
-        .A(A),
-        .B(B),
-        .ALU_Sel(ALU_Sel)
-        /*.ALU_Out(ALU_Out),
-        .Zero(Zero),
-        .Negative(Negative),
-        .Carry(Carry),
-        .Overflow(Overflow)*/
-    );
-
-
 endmodule
 
 
@@ -745,8 +861,8 @@ module control_unit (
     output reg TEMP_Load,
     output reg CCR_Load,
     output reg [3:0] ALU_Sel,
-    output reg Bus1_Sel,
-    output reg Bus2_Sel,
+    output reg [2:0] Bus1_Sel,
+    output reg [1:0] Bus2_Sel,
     output reg Ads_Sel,
     output reg T_Dec,
     output reg T_Inc
@@ -821,36 +937,49 @@ module control_unit (
           S_RET_4 = 63, //-- RETORNAR
           S_RET_5 = 64,
           S_RET_6 = 65,
-          S_ADD_AB_4 = 66; //-- Addition States
-          S_SUB_AB_4 = 67; //-- Subtração
-          S_MUL_AB_4 = 68; //--  Multiplicação
-          S_DIV_AB_4 = 69; //-- Divisão
-          S_MOD_AB_4 = 70; //-- Resto da divisão
-          S_NOT_4 = 72;
-          S_AND_4 = 73;
-          S_NAND_4 = 74;
-          S_OR_4 = 75;
-          S_NOR_4 = 76;
-          S_XOR_4 = 77;
-          S_XNOR_4 = 78;
-          S_SHL_A_4 = 79;
-          S_SHL_B_4 = 80;
-          S_SHR_A_4 = 81;
-          S_SHR_B_4 = 82;
-          S_CPE_AB_4 = 83; //-- Comparador
-          S_CPG_AB_4 = 84; //-- Comparador
-          S_CPL_AB_4 = 85; //-- Comparador
-          S_PUSH_4 = 86;
-          S_PUSH_5 = 87; 
-          S_PUSH_6 = 88; 
-          S_PUSH_7 = 89;  
-          S_POP_4 = 90;
-          S_POP_5 = 91;
-          S_POP_6 = 92;
-          S_CMP_4 = 93;
-          S_NOP_4 = 94;
-          S_IN_4 = 95;
-          S_OUT_4 = 9;
+          S_ADD_AB_4 = 66, //-- Addition States
+          S_SUB_AB_4 = 67, //-- Subtração
+          S_MUL_AB_4 = 68, //--  Multiplicação
+          S_DIV_AB_4 = 69, //-- Divisão
+          S_MOD_AB_4 = 70, //-- Resto da divisão
+          S_NOT_A_4 = 71,
+          S_NOT_B_4 = 72,
+          S_AND_4 = 73,
+          S_NAND_4 = 74,
+          S_OR_4 = 75,
+          S_NOR_4 = 76,
+          S_XOR_4 = 77,
+          S_XNOR_4 = 78,
+          S_SHL_A_4 = 79,
+          S_SHL_B_4 = 80,
+          S_SHR_A_4 = 81,
+          S_SHR_B_4 = 82,
+          S_CPE_AB_4 = 83, //-- Comparador
+          S_CPG_AB_4 = 84, //-- Comparador
+          S_CPL_AB_4 = 85, //-- Comparador
+          S_PUSH_4 = 86,
+          S_PUSH_5 = 87, 
+          S_PUSH_6 = 88, 
+          S_PUSH_7 = 89,  
+          S_POP_4 = 90,
+          S_POP_5 = 91,
+          S_POP_6 = 92,
+          S_CMP_4 = 93,
+          S_NOP_4 = 94,
+          S_IN_4 = 95,
+          S_IN_5 = 96,
+          S_IN_6 = 97,
+          S_IN_7 = 98,
+          S_IN_8 = 99,
+          S_OUT_4 = 100,
+          S_OUT_5 = 101,
+          S_OUT_6 = 102,
+          S_OUT_7 = 103,
+          S_INC_A_4 = 104,
+   		    S_INC_B_4 = 105,
+  		    S_DEC_A_4 = 106,
+  		    S_DEC_B_4 = 107,
+  		    S_CMP_AB_4 = 108;
           
 
 	//ESTADO DE MEMORIA
@@ -870,100 +999,106 @@ module control_unit (
                 S_FETCH_1 : next_state = S_FETCH_2;
                 S_FETCH_2 : next_state = S_DECODE_3;
                 S_DECODE_3 : 
-                if (IR == 11) // -> LDA_IMM 
+                if (IR == 8'h1E) // -> LDA_IMM 
                         next_state = S_LDA_IMM_4; // Load A (Immediate)
-              	else if (IR == 12) // -> LDA
+              	else if (IR == 8'h1F) // -> LDA
                         next_state = S_LDA_DIR_4; // Load A (Direct)
-             	 else if (IR == 13) 
+             	 else if (IR == 8'h24) 
                         next_state = S_STA_DIR_4; // Store A (Direct)
-             	 else if (IR == 14) 
+             	 else if (IR == 8'h20) 
                         next_state = S_LDB_IMM_4; // Load B (Immediate)
-              	else if (IR == 15) 
+              	else if (IR == 8'h21) 
                         next_state = S_LDB_DIR_4; // Load B (Direct)
-              	else if (IR == 16) 
+              	else if (IR == 8'h25) 
                         next_state = S_STB_DIR_4; // Store B (Direct) 
-                else if (IR == 14) 
+                else if (IR == 8'h22) 
                         next_state = S_LDC_IMM_4; // Load C (Immediate)
-              	else if (IR == 15) 
+              	else if (IR == 8'h23) 
                         next_state = S_LDC_DIR_4; // Load C (Direct)
-              	else if (IR == 16) 
+              	else if (IR == 8'h26) 
                         next_state = S_STC_DIR_4; // Store C (Direct) 
-              	else if (IR == 17) 
+              	else if (IR == 8'h2B) 
                         next_state = S_BRA_4; // Branch 
-              	else if(IR == 18 && CCR[2] == 0) // Z = 0 -> significa que a condicional de BEQ não foi atendida(Z=0)
+              	else if(IR == 8'h2C && CCR[2] == 0) // Z = 0 -> significa que a condicional de BEQ não foi atendida(Z=0)
                         next_state = S_BEQ_7;
-              	else if(IR == 18 && CCR[2] == 1) // Z é o segundo bit mais significativo de CCR -> significa que a condicional de BEQ foi atendida(Z=1)
+              	else if(IR == 8'h2C && CCR[2] == 1) // Z é o segundo bit mais significativo de CCR -> significa que a condicional de BEQ foi atendida(Z=1)
                         next_state = S_BEQ_4;
-             	 else if(IR == 19 && CCR[2] == 0) // Z = 0, significa que a condicional de BNQ foi atendida
+             	 else if(IR == 8'h2D && CCR[2] == 0) // Z = 0, significa que a condicional de BNQ foi atendida
                         next_state = S_BNQ_4;
-              	else if(IR == 19 && CCR[2] == 1) // Z = 1, significa que a condicional de BNQ não foi atendida
+              	else if(IR == 8'h2D && CCR[2] == 1) // Z = 1, significa que a condicional de BNQ não foi atendida
                         next_state = S_BNQ_7;
-             	 else if(IR == 20 && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // N = 0 = V, Z = 0 significa que a condicional de BGT foi atendida
+             	 else if(IR == 8'h2F && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // N = 0 = V, Z = 0 significa que a condicional de BGT foi atendida
                         next_state = S_BGT_4;
-             	 else if(IR == 20 && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // N = 1, Z = 0 significa que a condicional de BGT não foi atendida
+             	 else if(IR == 8'h2F && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // N = 1, Z = 0 significa que a condicional de BGT não foi atendida
                         next_state = S_BGT_7;
-              	else if(IR == 21 && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT foi atendida
+              	else if(IR == 8'h2E && CCR[3] == 1 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT foi atendida
                         next_state = S_BLT_4;
-             	 else if(IR == 21 && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT não foi atendida
+             	 else if(IR == 8'h2E && CCR[3] == 0 && CCR[1] == 0 && CCR[2] == 0) // significa que a condicional de BLT não foi atendida
                         next_state = S_BLT_7;
-              	else if(IR == 22) // call
+              	else if(IR == 8'h29) // call
                         next_state = S_CALL_4;
-                else if(IR == 23) // ret
+                else if(IR == 8'h2A) // ret
                         next_state = S_RET_4;
-              	else if (IR == 24) //add 
+              	else if (IR == 8'h02) //add 
                         next_state = S_ADD_AB_4; // Add A and B
-                else if (IR == 25) //sub
+                else if (IR == 8'h03) //sub
                         next_state = S_SUB_AB_4; // sub A and B
-                else if (IR == 26) //mult 
+                else if (IR == 8'h04) //mult 
                         next_state = S_MUL_AB_4; // mult A and B
-                else if (IR == 27) //div
+                else if (IR == 8'h05) //div
                         next_state = S_DIV_AB_4; // div A and B
-                else if (IR == 28) //mod
+                else if (IR == 8'h06) //mod
                         next_state = S_MOD_AB_4; // mod A and B
-                else if (IR == 29) //cp
+                else if (IR == 8'h17) //cp
                         next_state = S_CPE_AB_4; // comp A and B
-                else if (IR == 30) //cp
+                else if (IR == 8'h18) //cp
                         next_state = S_CPG_AB_4; // comp A and B
-                else if (IR == 31) //cp
+                else if (IR == 8'h19) //cp
                         next_state = S_CPL_AB_4; // comp A and B
-                else if (IR == 32) //not
-                        next_state = S_NOT_4;
-                else if (IR == 33) //and
+                else if (IR == 8'h0B) //not
+                        next_state = S_NOT_A_4;
+                else if (IR == 8'h0C) //not
+                        next_state = S_NOT_B_4;
+                else if (IR == 8'h0D) //and
                         next_state = S_AND_4;
-                else if (IR == 34) //nand
+                else if (IR == 8'h0E) //nand
                         next_state = S_NAND_4;
-                else if (IR == 35) //or
+                else if (IR == 8'h0F) //or
                         next_state = S_OR_4;
-                else if (IR == 36) //nor
+                else if (IR == 8'h10) //nor
                         next_state = S_NOR_4;
-                else if (IR == 37) //xor
+                else if (IR == 8'h11) //xor
                         next_state = S_XOR_4;
-                else if (IR == 38) //xnor
+                else if (IR == 8'h12) //xnor
                         next_state = S_XNOR_4;
-                else if (IR == 39) //
+                else if (IR == 8'h13) //
                         next_state = S_SHL_A_4;
-                else if (IR == 40) //
+                else if (IR == 8'h14) //
                         next_state = S_SHL_B_4;
-                else if (IR == 41) //
+                else if (IR == 8'h15) //
                         next_state = S_SHR_A_4;
-                else if (IR == 42) //
+                else if (IR == 8'h16) //
                         next_state = S_SHR_B_4;
-                else if (IR == 43) //
+                else if (IR == 8'h1A) //
                         next_state = S_CMP_4;
-                else if (IR == 44) //
+                else if (IR == 8'h07) //
                         next_state = S_INC_A_4;
-                else if (IR == 45) //
+                else if (IR == 8'h08) //
                         next_state = S_INC_B_4;
-                else if (IR == 46) //
+                else if (IR == 8'h09) //
                         next_state = S_DEC_A_4;
-                else if (IR == 47) //
+                else if (IR == 8'h0A) //
                         next_state = S_DEC_B_4;
-                else if (IR == 48) //
+                else if (IR == 8'h27) //
                         next_state = S_PUSH_4;
-                else if (IR == 49) //
+                else if (IR == 8'h28) //
                         next_state = S_POP_4;
-                else if (IR == 50) //
+                else if (IR == 8'h1D) //
                         next_state = S_NOP_4;
+                else if (IR == 8'h1B) //
+                        next_state = S_IN_4;
+                else if (IR == 8'h1C) //
+                        next_state = S_OUT_4;
                 else 
                         next_state = S_FETCH_0; // Default fallback
                 S_LDA_IMM_4 : next_state = S_LDA_IMM_5; // Path for LDA_IMM instruction
@@ -1055,7 +1190,8 @@ module control_unit (
                 //CP
               	S_CMP_AB_4 : next_state = S_FETCH_0; 
                 //NOT
-              	S_NOT_4 : next_state = S_FETCH_0; 
+              	S_NOT_A_4 : next_state = S_FETCH_0;
+                S_NOT_B_4 : next_state = S_FETCH_0; 
                 //AND
               	S_AND_4 : next_state = S_FETCH_0; 
                 //NAND
@@ -1090,6 +1226,15 @@ module control_unit (
                 //NOP
                 S_NOP_4 : next_state = S_FETCH_0;
                 //IN/OUT
+                S_IN_4 : next_state = S_IN_5; //
+                S_IN_5 : next_state = S_IN_6;
+                S_IN_6 : next_state = S_IN_7;
+              	S_IN_7 : next_state = S_IN_8;
+              	S_IN_8 : next_state = S_FETCH_0;
+                S_OUT_4 : next_state = S_OUT_5; // Path for STA_DIR instruction
+                S_OUT_5 : next_state = S_OUT_6;
+                S_OUT_6 : next_state = S_OUT_7;
+              	S_OUT_7 : next_state = S_FETCH_0;
 
 
                 // Next state logic for other states goes here...
@@ -1770,7 +1915,7 @@ module control_unit (
                     TEMP_Load = 0;
                     ALU_Sel = 5'b00000;
                     CCR_Load = 0;
-                    Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
+                    Bus1_Sel = 3'b010; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 1;
                     T_Dec = 0;
@@ -1847,7 +1992,7 @@ module control_unit (
                     TEMP_Load = 0;
                     ALU_Sel = 5'b00000;
                     CCR_Load = 0;
-                    Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
+                    Bus1_Sel = 3'b011; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 1;
                     T_Dec = 0;
@@ -2975,6 +3120,176 @@ module control_unit (
                     Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
                     Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
                     write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+                S_IN_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_IN_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_IN_6 : begin 
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_IN_7 : begin 
+                    //-- da tempo para receber
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_IN_8 : begin 
+                    //-- registrador A recebe informação da memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 1;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+                S_OUT_4 : begin 
+                  //-- MAR recebe o PC(nesse caso o operand)
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b01; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_OUT_5 : begin 
+                    //-- passa o PC enquanto o MAR recebe o PC
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 1;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_OUT_6 : begin 
+                    //-- MAR recebe o oprando de onde tem que guardar na memoria
+                    IR_Load = 0;
+                    MAR_Load = 1;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b000; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b10; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 0;
+                    T_Dec = 0;
+                    T_Inc = 0;
+                    Ads_Sel = 0;
+                end
+              	S_OUT_7 : begin 
+                    //-- registrador A passa a informação para a memória
+                    IR_Load = 0;
+                    MAR_Load = 0;
+                    PC_Load = 0;
+                    PC_Inc = 0;
+                    A_Load = 0;
+                    B_Load = 0;
+                  	C_Load = 0;
+                    TEMP_Load = 0;
+                    ALU_Sel = 5'b00000;
+                    CCR_Load = 0;
+                    Bus1_Sel = 3'b001; //-- "00"=PC, "01"=A, "10"=B
+                    Bus2_Sel = 2'b00; //-- "00"=ALU, "01"=Bus1, "10"=from_memory
+                    write = 1;
                     T_Dec = 0;
                     T_Inc = 0;
                     Ads_Sel = 0;
