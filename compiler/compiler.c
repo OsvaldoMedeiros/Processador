@@ -69,15 +69,24 @@ void remove_comments(char *line){
     if(comment != NULL) *comment = '\0'; // caso ache um comentário, substitui pelo fim da string
 }
 
+// Função para converter um hexadecimal de 2 dígitos em binário de 8 bits
+void hex_to_binary(const char *hex, char *binary) {
+    int decimal = (int)strtol(hex, NULL, 16); // Converte o hexadecimal para decimal
+    for (int i = 7; i >= 0; i--) {
+        binary[7 - i] = (decimal & (1 << i)) ? '1' : '0';
+    }
+    binary[8] = '\0'; // Adiciona o terminador de string
+}
+
 int main(){
     FILE *asm = fopen("file_source.asm", "r");
-    FILE *bin = fopen("code_source.bin", "wb");
     char line[256]; // linha do arquivo .asm
 
     if(asm == NULL) {
         printf("Assembly file not found.");
         return 1;
     }
+    FILE *bin = fopen("code_source.bin", "wb");
     if(bin == NULL) {
         printf("Error while creating the binary file.");
         fclose(asm);
@@ -102,6 +111,12 @@ int main(){
                 if(!first_line) fputc('\n', bin);
                 fputs(div, bin);
                 first_line = 0;
+            }else if(strspn(div, "0123456789ABCDEFabcdef") == strlen(div) && strlen(div) == 2) { // verifica se a linha é um hexadecimal válido de 2 dígitos
+                    char binary[9];
+                    hex_to_binary(div, binary); // Converte para binário
+                    if(!first_line) fputc('\n', bin);
+                    fputs(binary, bin);
+                    first_line = 0;
             }else{ // caso a "palavra" não seja nem um binário 8 bits nem um mnemônico
                 printf("Mnemonic '%s' not found in assembly.\n", div);
             }

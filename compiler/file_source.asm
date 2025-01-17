@@ -1,7 +1,12 @@
-NOT_A; inversão de bits
-00001010
-ADD # soma
-00010000 ; A
-00100110
-ADF
-STTR
+SUB ; Subtração
+00001010 # A
+00000111
+NOT_B
+01011001
+AND
+00001000
+00001000
+MOR ; Falso mnemonico
+ARP_A # Falso
+# comentarios
+NOP
