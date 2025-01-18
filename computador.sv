@@ -3,6 +3,7 @@
 
 
 //PROGRAM MEMORY 
+integer f; //quantidade de linhas de entrada
 module programmemory (
     input wire [7:0] address,  // Endereço da ROM
     input wire clock,          // Clock
@@ -12,7 +13,6 @@ module programmemory (
     integer file, status;
     reg [7:0] line;           // Buffer para armazenar cada linha lida
     integer EN;
-    integer i;
 
     // Inicialização da memória de programa a partir de um arquivo
     initial begin
@@ -23,13 +23,13 @@ module programmemory (
         end
 
        // $display("Lendo o arquivo linha por linha:");
-        i = 0;
+        f = 0;
         while (!$feof(file)) begin
             status = $fscanf(file, "%b\n", prmemo[i]);  // Lê 1 byte de cada vez
             if (status != 0) begin
                 $display("Linha lida: %b", prmemo[i]);
             end
-            i = i + 1;
+            f = f + 1;
         end
         $fclose(file);
     end
@@ -153,7 +153,7 @@ module memory (
 // Bloco para gerenciamento das portas de saída
     integer i;
     always @(posedge clock or negedge reset) begin
-        if (!reset) begin
+        if (reset != 0) begin
             // Resetando todas as portas de saída
             for (i = 0; i < 16; i = i + 1) begin
                 port_out_data[i] <= 8'h00;
@@ -165,7 +165,12 @@ module memory (
 
     // Multiplexador para selecionar a saída apropriada
     always @(*) begin
-        if (address <= 8'd127) 
+        f = f & 8'hFF; //limita o tamanho de F para poder ser armazenado na porta de saída
+        if(address == f) begin //se o endereço para pegar informações for
+          port_out[15] = 8'h01;
+          $display("FIM DE EXECUÇÃO");
+        end
+        else if (address <= 8'd127) 
             data_out = rom_data_out; // ROM
         else if (127<address && address <= 8'd175) 
             data_out = ram_data_out; // RAM
@@ -1090,9 +1095,9 @@ module control_unit (
           S_SHL_B_4 = 80,
           S_SHR_A_4 = 81,
           S_SHR_B_4 = 82,
-          S_CPE_AB_4 = 83, //-- Comparador
-          S_CPG_AB_4 = 84, //-- Comparador
-          S_CPL_AB_4 = 85, //-- Comparador
+          S_CPE_AB_4 = 83, // -- Comparador
+          S_CPG_AB_4 = 84, // -- Comparador
+          S_CPL_AB_4 = 85, // -- Comparador
           S_PUSH_4 = 86,
           S_PUSH_5 = 87, 
           S_PUSH_6 = 88, 
@@ -1239,92 +1244,90 @@ module control_unit (
                         next_state = S_OUT_4;
                 else 
                         next_state = S_FETCH_0; // Default fallback
-                S_LDA_IMM_4 : next_state = S_LDA_IMM_5; // Path for LDA_IMM instruction
+                S_LDA_IMM_4 : next_state = S_LDA_IMM_5; // LDA_IMM 
                 S_LDA_IMM_5 : next_state = S_LDA_IMM_6;
                 S_LDA_IMM_6 : next_state = S_FETCH_0;
-              	S_LDB_IMM_4 : next_state = S_LDB_IMM_5; // Path for LDB_IMM instruction
+              	S_LDB_IMM_4 : next_state = S_LDB_IMM_5; // LDB_IMM 
                 S_LDB_IMM_5 : next_state = S_LDB_IMM_6;
                 S_LDB_IMM_6 : next_state = S_FETCH_0;
-              	S_LDC_IMM_4 : next_state = S_LDC_IMM_5; // Path for LDC_IMM instruction
+              	S_LDC_IMM_4 : next_state = S_LDC_IMM_5; // LDC_IMM
                 S_LDC_IMM_5 : next_state = S_LDC_IMM_6;
                 S_LDC_IMM_6 : next_state = S_FETCH_0;
               	//LD*_DIR
-              	S_LDA_DIR_4 : next_state = S_LDA_DIR_5; // Path for LDA_DIR instruction
+              	S_LDA_DIR_4 : next_state = S_LDA_DIR_5; // LDA_DIR
                 S_LDA_DIR_5 : next_state = S_LDA_DIR_6;
                 S_LDA_DIR_6 : next_state = S_LDA_DIR_7;
               	S_LDA_DIR_7 : next_state = S_LDA_DIR_8;
               	S_LDA_DIR_8 : next_state = S_FETCH_0;
-              	S_LDB_DIR_4 : next_state = S_LDB_DIR_5; // Path for LDB_DIR instruction
+              	S_LDB_DIR_4 : next_state = S_LDB_DIR_5; // LDB_DIR
                 S_LDB_DIR_5 : next_state = S_LDB_DIR_6;
                 S_LDB_DIR_5 : next_state = S_LDB_DIR_6;
                 S_LDB_DIR_6 : next_state = S_LDB_DIR_7;
               	S_LDB_DIR_7 : next_state = S_LDB_DIR_8;
               	S_LDB_DIR_8 : next_state = S_FETCH_0;
-              	S_LDC_DIR_4 : next_state = S_LDC_DIR_5; // Path for LDC_DIR instruction
+              	S_LDC_DIR_4 : next_state = S_LDC_DIR_5; // LDC_DIR
                 S_LDC_DIR_5 : next_state = S_LDC_DIR_6;
                 S_LDC_DIR_5 : next_state = S_LDC_DIR_6;
                 S_LDC_DIR_6 : next_state = S_LDC_DIR_7;
               	S_LDC_DIR_7 : next_state = S_LDC_DIR_8;
               	S_LDC_DIR_8 : next_state = S_FETCH_0;
               	//ST*_DIR
-              	S_STA_DIR_4 : next_state = S_STA_DIR_5; // Path for STA_DIR instruction
+              	S_STA_DIR_4 : next_state = S_STA_DIR_5; //  STA_DIR 
                 S_STA_DIR_5 : next_state = S_STA_DIR_6;
                 S_STA_DIR_6 : next_state = S_STA_DIR_7;
               	S_STA_DIR_7 : next_state = S_FETCH_0;
-              	S_STB_DIR_4 : next_state = S_STB_DIR_5; // Path for STB_DIR instruction
-                S_STB_DIR_5 : next_state = S_STB_DIR_6;
+              	S_STB_DIR_4 : next_state = S_STB_DIR_5; // STB_DIR 
                 S_STB_DIR_5 : next_state = S_STB_DIR_6;
                 S_STB_DIR_6 : next_state = S_STB_DIR_7;
               	S_STB_DIR_7 : next_state = S_FETCH_0;
-              	S_STC_DIR_4 : next_state = S_STC_DIR_5; // Path for STC_DIR instruction
-                S_STC_DIR_5 : next_state = S_STC_DIR_6;
+              	S_STC_DIR_4 : next_state = S_STC_DIR_5; // STC_DIR 
                 S_STC_DIR_5 : next_state = S_STC_DIR_6;
                 S_STC_DIR_6 : next_state = S_STC_DIR_7;
               	S_STC_DIR_7 : next_state = S_FETCH_0;
               	//BRA(SEM CONDICIONAL)
-              	S_BRA_4 : next_state = S_BRA_5; // Path for BRA instruction
+              	S_BRA_4 : next_state = S_BRA_5; //  BRA 
                 S_BRA_5 : next_state = S_BRA_6;
                 S_BRA_6 : next_state = S_FETCH_0;
               	//BEQ(COM CONDICIONAL)
-              	S_BEQ_4 : next_state = S_BEQ_5; // Path for BEQ instruction(caso dê bom)
+              	S_BEQ_4 : next_state = S_BEQ_5; //  BEQ (caso dê bom)
                 S_BEQ_5 : next_state = S_BEQ_6;
                 S_BEQ_6 : next_state = S_FETCH_0;
-              	S_BEQ_7 : next_state = S_FETCH_0; // Path for BEQ instruction(caso dê ruim)
+              	S_BEQ_7 : next_state = S_FETCH_0; //  BEQ (caso dê ruim)
                 //BNQ
-                S_BNQ_4 : next_state = S_BNQ_5; // Path for BNQ instruction(caso dê bom)
+                S_BNQ_4 : next_state = S_BNQ_5; //  BNQ (caso dê bom)
                 S_BNQ_5 : next_state = S_BNQ_6;
                 S_BNQ_6 : next_state = S_FETCH_0;
-              	S_BNQ_7 : next_state = S_FETCH_0; // Path for BNQ instruction(caso dê ruim)
+              	S_BNQ_7 : next_state = S_FETCH_0; //  BNQ (caso dê ruim)
                 //BGT
-                S_BGT_4 : next_state = S_BGT_5; // Path for BGT instruction(caso dê bom)
+                S_BGT_4 : next_state = S_BGT_5; // BGT (caso dê bom)
                 S_BGT_5 : next_state = S_BGT_6;
                 S_BGT_6 : next_state = S_FETCH_0;
-              	S_BGT_7 : next_state = S_FETCH_0; // Path for BGT instruction(caso dê ruim)
+              	S_BGT_7 : next_state = S_FETCH_0; //  BGT (caso dê ruim)
                 //BLT
-                S_BLT_4 : next_state = S_BLT_5; // Path for BLT instruction(caso dê bom)
+                S_BLT_4 : next_state = S_BLT_5; //  BLT (caso dê bom)
                 S_BLT_5 : next_state = S_BLT_6;
                 S_BLT_6 : next_state = S_FETCH_0;
-              	S_BLT_7 : next_state = S_FETCH_0; // Path for BLT instruction(caso dê ruim)
+              	S_BLT_7 : next_state = S_FETCH_0; //  BLT (caso dê ruim)
                 //CALL
-                S_CALL_4 : next_state = S_CALL_5; // Path for CALL instruction
+                S_CALL_4 : next_state = S_CALL_5; //  CALL 
                 S_CALL_5 : next_state = S_CALL_6;
                 S_CALL_6 : next_state = S_CALL_7;
                 S_CALL_7 : next_state = S_FETCH_0;
                 //RET
-                S_RET_4 : next_state = S_RET_5; // Path for RET instruction
+                S_RET_4 : next_state = S_RET_5; //  RET 
                 S_RET_5 : next_state = S_RET_6;
                 S_RET_6 : next_state = S_FETCH_0;
                 //OPERAÇÕES ULA
                 //ADD
-              	S_ADD_AB_4 : next_state = S_FETCH_0; // Path for ADD_AB instruction
+              	S_ADD_AB_4 : next_state = S_FETCH_0; //  ADD_AB 
                 //SUB
-              	S_SUB_AB_4 : next_state = S_FETCH_0; // Path for SUB_AB instruction
+              	S_SUB_AB_4 : next_state = S_FETCH_0; //  SUB_AB 
                 //MULT
-              	S_MUL_AB_4 : next_state = S_FETCH_0; // Path for MUL_AB instruction
+              	S_MUL_AB_4 : next_state = S_FETCH_0; //  MUL_AB 
                 //DIV
-              	S_DIV_AB_4 : next_state = S_FETCH_0; // Path for DIV_AB instruction
+              	S_DIV_AB_4 : next_state = S_FETCH_0; //  DIV_AB 
                 //MOD
-              	S_MOD_AB_4 : next_state = S_FETCH_0; // Path for MOD_AB instruction
+              	S_MOD_AB_4 : next_state = S_FETCH_0; //  MOD_AB 
                 //CP
               	S_CMP_AB_4 : next_state = S_FETCH_0; 
                 //NOT
@@ -1364,19 +1367,19 @@ module control_unit (
                 //NOP
                 S_NOP_4 : next_state = S_FETCH_0;
                 //IN/OUT
-                S_IN_4 : next_state = S_IN_5; //
+                S_IN_4 : next_state = S_IN_5; 
                 S_IN_5 : next_state = S_IN_6;
                 S_IN_6 : next_state = S_IN_7;
               	S_IN_7 : next_state = S_IN_8;
               	S_IN_8 : next_state = S_FETCH_0;
-                S_OUT_4 : next_state = S_OUT_5; // Path for STA_DIR instruction
+                S_OUT_4 : next_state = S_OUT_5; 
                 S_OUT_5 : next_state = S_OUT_6;
                 S_OUT_6 : next_state = S_OUT_7;
               	S_OUT_7 : next_state = S_FETCH_0;
 
 
-                // Next state logic for other states goes here...
-                default: next_state = S_FETCH_0; // Default case to avoid latches
+                
+                default: next_state = S_FETCH_0; 
             endcase
        end
   
@@ -1385,7 +1388,7 @@ module control_unit (
         begin: OUTPUT_LOGIC
             case (current_state)
                 S_FETCH_0 : begin 
-                    //-- Put PC onto MAR to provide address of Opcode
+                    //-- MAR recebe o endereço do Opcode guardado em PC 
                     IR_Load = 0;
                     MAR_Load = 1;
                     PC_Load = 0;
@@ -1404,7 +1407,7 @@ module control_unit (
                     Ads_Sel = 0;
                 end
                 S_FETCH_1 : begin 
-                    //-- Increment PC, Opcode will be available next state
+                    //-- Incrementa PC
                     IR_Load = 0;
                     MAR_Load = 0;
                     PC_Load = 0;
@@ -1423,7 +1426,7 @@ module control_unit (
                     Ads_Sel = 0;
                 end
               	S_FETCH_2 : begin 
-                    //-- ir recebe informação da memória
+                    //-- IR recebe informação da memória
                     IR_Load = 1;
                     MAR_Load = 0;
                     PC_Load = 0;
@@ -3506,7 +3509,7 @@ module cpu (
     );
 
     // Instanciação da unidade de controle
-    control_unit cu (
+    control_unit uc (
         .clock(clock),
         .reset(reset),
         .IR(IR_Out),

@@ -24,19 +24,16 @@ module tb_computer;
     initial begin
         // Inicialização
         reset = 1;  // Ativa o reset inicialmente
-        #10;        // Aguarda 20 unidades de tempo para estabilização do reset
+        #10;        // Aguarda 10 unidades de tempo para estabilização do reset
         reset = 0;  // Desativa o reset
 
         // Simulação de funcionamento
-        #400;       // Simula o sistema por 100 unidades de tempo
+        while(port_out[15] != 1) begin //quando indicado pela porta de saída, a simulção para
+        	#5;
+        end
 
         // Finaliza a simulação
         $finish;
-    end
-
-    // Monitoramento dos sinais
-    initial begin
-        //$monitor("Time: %0t | Reset: %b | Data_out: %h", $time, reset, data_out);
     end
 
 endmodule
