@@ -25,9 +25,9 @@ module programmemory (
        // $display("Lendo o arquivo linha por linha:");
         f = 0;
         while (!$feof(file)) begin
-            status = $fscanf(file, "%b\n", prmemo[i]);  // Lê 1 byte de cada vez
+            status = $fscanf(file, "%b\n", prmemo[f]);  // Lê 1 byte de cada vez
             if (status != 0) begin
-                $display("Linha lida: %b", prmemo[i]);
+                $display("Linha lida: %b", prmemo[f]);
             end
             f = f + 1;
         end
@@ -158,7 +158,7 @@ module memory (
             for (i = 0; i < 16; i = i + 1) begin
                 port_out_data[i] <= 8'h00;
             end
-        end else if (write && (address >= 8'hE0 && address <= 8'hEF)) begin
+        end else if (write && (address >= 8'hE0 && address <= 8'hEE)) begin
             port_out_data[address - 8'hE0] <= data_in; // Escrevendo na porta de saída correspondente
         end
     end
@@ -167,8 +167,8 @@ module memory (
     always @(*) begin
         f = f & 8'hFF; //limita o tamanho de F para poder ser armazenado na porta de saída
         if(address == f) begin //se o endereço para pegar informações for
-          port_out[15] = 8'h01;
-          $display("FIM DE EXECUÇÃO");
+          port_out_data[15] = 8'h01;
+          $display("FIM DE EXECUCAO");
         end
         else if (address <= 8'd127) 
             data_out = rom_data_out; // ROM
@@ -836,7 +836,8 @@ module data_path (
     // Registradores
   	reg [7:0] IR, MAR, PC, A, B, TEMP, CCR, T;
     reg [15:0] C;
-    reg [7:0] Bus1, Bus2, ALU_Result, NZVC;
+    reg [7:0] Bus1, Bus2, ALU_Result;
+    reg[3:0] NZVC;
 
     // Instância do módulo ALU
     alu alu_instance (
@@ -904,7 +905,6 @@ MAR <= 8'h00;
 
           if (MAR_Load == 1) begin
 MAR = Bus2;
-            $display("entrou aqui dentro");
           end
           $display("MAR : %b", MAR);
 end

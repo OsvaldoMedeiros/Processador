@@ -28,7 +28,7 @@ module tb_computer;
         reset = 0;  // Desativa o reset
 
         // Simulação de funcionamento
-        while(port_out[15] != 1) begin //quando indicado pela porta de saída, a simulção para
+        while(port_out_data[15] != 1) begin //quando indicado pela porta de saída, a simulção para
         	#5;
         end
 
