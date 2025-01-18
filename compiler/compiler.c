@@ -1,7 +1,8 @@
-#include<stdio.h>
-#include<string.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h> // Inclui a declaração de strtol
 
-typedef struct{ // Dicionário para guardar o par de valores opcode e mnemônico
+typedef struct { // Dicionário para guardar o par de valores opcode e mnemônico
     char *mnem;
     char *opcode;
 } Dictionary;
@@ -55,18 +56,18 @@ Dictionary opcode_table[] = { // tabela com todos os mnemônicos e seus respecti
     {"BGT", "00101111"}
 };
 
-char *opcode_translator(const char *mnem){ // função para buscar na tabela o opcode correspondente
-    for(int i = 0; i < sizeof(opcode_table)/sizeof(opcode_table[0]); i++){
-        if(strcmp(mnem,opcode_table[i].mnem)==0){
+char *opcode_translator(const char *mnem) { // função para buscar na tabela o opcode correspondente
+    for (int i = 0; i < sizeof(opcode_table) / sizeof(opcode_table[0]); i++) {
+        if (strcmp(mnem, opcode_table[i].mnem) == 0) {
             return opcode_table[i].opcode;
         }
     }
     return NULL; // se o mnemônico não for encontrado, retorna null
 }
 
-void remove_comments(char *line){
+void remove_comments(char *line) {
     char *comment = strpbrk(line, ";#"); // identifica os comentários, caracterizados por ; ou #
-    if(comment != NULL) *comment = '\0'; // caso ache um comentário, substitui pelo fim da string
+    if (comment != NULL) *comment = '\0'; // caso ache um comentário, substitui pelo fim da string
 }
 
 // Função para converter um hexadecimal de 2 dígitos em binário de 8 bits
@@ -78,56 +79,55 @@ void hex_to_binary(const char *hex, char *binary) {
     binary[8] = '\0'; // Adiciona o terminador de string
 }
 
-int main(){
-    FILE *asm = fopen("file_source.asm", "r");
+int main() {
+    FILE *asm_file = fopen("file_source.asm", "r"); // Renomeia "asm" para "asm_file"
     char line[256]; // linha do arquivo .asm
 
-    if(asm == NULL) {
+    if (asm_file == NULL) {
         printf("Assembly file not found.");
         return 1;
     }
     FILE *bin = fopen("../code_source.bin", "wb");
-    if(bin == NULL) {
+    if (bin == NULL) {
         printf("Error while creating the binary file.");
-        fclose(asm);
+        fclose(asm_file);
         return 1;
     }
     printf("File successfully opened.\n");
     int first_line = 1; // para rastrear as linhas e impedir espaços ou linhas vazias no final
-    while(fgets(line, sizeof(line), asm)){ // lê a linha inteira e armazena
+    while (fgets(line, sizeof(line), asm_file)) { // lê a linha inteira e armazena
         remove_comments(line); // remove os comentários
         char *div = strtok(line, " \t\n"); // divide a linha em "palavras" ou sequência de caracteres
-        while(div){ // enquanto houver "palavras"
-            if(strlen(div) == 0){ // ignora os divisores vazios
+        while (div) { // enquanto houver "palavras"
+            if (strlen(div) == 0) { // ignora os divisores vazios
                 div = strtok(NULL, " \t\n");
                 continue;
             }
             char *opcode = opcode_translator(div);
-            if(opcode != NULL){ // se o opcode existir na tabela, substitui e copia para o .bin
-                if(!first_line) fputc('\n', bin);
+            if (opcode != NULL) { // se o opcode existir na tabela, substitui e copia para o .bin
+                if (!first_line) fputc('\n', bin);
                 fputs(opcode, bin);
                 first_line = 0;
-            }else if(strspn(div, "01")== strlen(div) && strlen(div) == 8){ // verifica se a "palavra" contém apenas 0s e 1s e se formam um número de 8 bits
-                if(!first_line) fputc('\n', bin);
+            } else if (strspn(div, "01") == strlen(div) && strlen(div) == 8) { // verifica se a "palavra" contém apenas 0s e 1s e se formam um número de 8 bits
+                if (!first_line) fputc('\n', bin);
                 fputs(div, bin);
                 first_line = 0;
-            }else if(strspn(div, "0123456789ABCDEFabcdef") == strlen(div) && strlen(div) == 2) { // verifica se a linha é um hexadecimal válido de 2 dígitos
-                    char binary[9];
-                    hex_to_binary(div, binary); // Converte para binário
-                    if(!first_line) fputc('\n', bin);
-                    fputs(binary, bin);
-                    first_line = 0;
-            }else{ // caso a "palavra" não seja nem um binário 8 bits nem um mnemônico
+            } else if (strspn(div, "0123456789ABCDEFabcdef") == strlen(div) && strlen(div) == 2) { // verifica se a linha é um hexadecimal válido de 2 dígitos
+                char binary[9];
+                hex_to_binary(div, binary); // Converte para binário
+                if (!first_line) fputc('\n', bin);
+                fputs(binary, bin);
+                first_line = 0;
+            } else { // caso a "palavra" não seja nem um binário 8 bits nem um mnemônico
                 printf("Mnemonic '%s' not found in assembly.\n", div);
             }
             div = strtok(NULL, " \t\n"); // passa pra próxima "palavra"
         }
-           
     }
 
-    fclose(asm);
+    fclose(asm_file); // Renomeado para "asm_file"
     fclose(bin);
-    printf("Assembly file compiled to binary successfuly.\n");
+    printf("Assembly file compiled to binary successfully.\n");
 
     return 0;
 }
